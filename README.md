@@ -177,3 +177,12 @@ This is a simulation for education. No real money, cards, SMS or bank connection
 
 
 
+
+
+
+
+
+
+
+
+
