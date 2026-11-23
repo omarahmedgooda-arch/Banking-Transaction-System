@@ -172,3 +172,8 @@ All endpoints are under `/api`. Send `Authorization: Bearer <token>` after loggi
 
 This is a simulation for education. No real money, cards, SMS or bank connections.
 
+
+
+
+
+
