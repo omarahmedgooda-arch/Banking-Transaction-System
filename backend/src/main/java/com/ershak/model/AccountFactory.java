@@ -13,7 +13,7 @@ public final class AccountFactory {
 
     public static Account create(AccountType type, BankSettings settings) {
         return switch (type) {
-            case SAVINGS -> new SavingsAccount(settings.savingsMonthlyOutgoing(), settings.savingsInterestRate());
+            case SAVINGS -> new SavingsAccount(settings.savingsMonthlyOutgoing());
             case CURRENT -> new CurrentAccount(settings.overdraftLimit());
         };
     }

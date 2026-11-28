@@ -2,16 +2,18 @@ import { useEffect, useState } from 'react';
 import { download, get } from '../api';
 import Icon from '../components/Icon';
 import { ErrorCard, Proverb, Skeleton, TxRow, useLoader } from '../components/ui';
-import { groupByDay, typeLabel } from '../format';
+import { groupByDay, statusLabel, typeLabel } from '../format';
 import { useToast } from '../components/Toast';
+import { useL } from '../prefs';
 
 const TYPES = [
-  ['', 'All'], ['TRANSFER', 'Transfers'], ['DEPOSIT', 'Deposits'], ['WITHDRAW', 'Withdrawals'],
-  ['GOAL_DEPOSIT', 'Goals'], ['INTEREST', 'Interest'],
+  ['', 'All', 'الكل'], ['TRANSFER', 'Transfers', 'تحويلات'], ['DEPOSIT', 'Deposits', 'إيداعات'], ['WITHDRAW', 'Withdrawals', 'سحب'],
+  ['GOAL_DEPOSIT', 'Goals', 'أهداف'],
 ];
 
 /** "Elly leek w elly 3aleek": transaction history with filters and PDF / CSV statements. */
 export default function Activity() {
+  const L = useL();
   const accounts = useLoader(() => get('/api/accounts'));
   const toast = useToast();
   const [accountId, setAccountId] = useState(null);
@@ -49,8 +51,8 @@ export default function Activity() {
     <main className="page">
       <div className="between">
         <div>
-          <h1>Activity</h1>
-          <Proverb style={{ fontSize: 16, textAlign: 'left' }}>اللي ليك واللي عليك</Proverb>
+          <h1>{L('Statement', 'كشف الحساب')}</h1>
+          <p className="small muted">{L('Everything in and out', 'اللي ليك واللي عليك')}</p>
         </div>
         <div className="row" style={{ gap: 8 }}>
           <button type="button" className="btn sm" onClick={() => exportStatement('pdf')} disabled={!accountId}>
@@ -69,7 +71,7 @@ export default function Activity() {
           {accounts.data.map((a) => (
             <button key={a.id} type="button" role="tab" aria-selected={a.id === accountId}
               className={`chip${a.id === accountId ? ' on' : ''}`} onClick={() => { setAccountId(a.id); setPage(1); }}>
-              {typeLabel[a.type].replace(' account', '')} {a.maskedNumber}
+              {typeLabel[a.type]} {a.maskedNumber}
             </button>
           ))}
         </div>
@@ -77,32 +79,29 @@ export default function Activity() {
 
       <div className="stack" style={{ gap: 10 }}>
         <div className="chips">
-          {TYPES.map(([v, l]) => (
-            <button key={v} type="button" className={`chip${filters.type === v ? ' on' : ''}`} onClick={() => setFilter('type', v)}>{l}</button>
+          {TYPES.map(([v, l, la]) => (
+            <button key={v} type="button" className={`chip${filters.type === v ? ' on' : ''}`} onClick={() => setFilter('type', v)}>{L(l, la)}</button>
           ))}
         </div>
         <div className="grid-2">
           <div className="field">
-            <label htmlFor="from" className="tiny muted">From</label>
+            <label htmlFor="from" className="tiny muted">{L('From', 'من')}</label>
             <input id="from" type="date" className="input" style={{ height: 42 }} value={filters.from} onChange={(e) => setFilter('from', e.target.value)} />
           </div>
           <div className="field">
-            <label htmlFor="to" className="tiny muted">To</label>
+            <label htmlFor="to" className="tiny muted">{L('To', 'لـ')}</label>
             <input id="to" type="date" className="input" style={{ height: 42 }} value={filters.to} onChange={(e) => setFilter('to', e.target.value)} />
           </div>
         </div>
         <select aria-label="Status" className="input" style={{ height: 42 }} value={filters.status} onChange={(e) => setFilter('status', e.target.value)}>
-          <option value="">Any status</option>
-          <option value="COMPLETED">Completed</option>
-          <option value="PENDING_OTP">Waiting for code</option>
-          <option value="PENDING_REVIEW">Under review</option>
-          <option value="REJECTED">Cancelled</option>
+          <option value="">{L('Any status', 'أي حالة')}</option>
+          {['COMPLETED', 'PENDING_OTP', 'PENDING_REVIEW', 'REJECTED'].map((k) => <option key={k} value={k}>{statusLabel[k]}</option>)}
         </select>
       </div>
 
       {error && <ErrorCard error={error} />}
       {!data && accountId && <Skeleton height={300} />}
-      {data && data.items.length === 0 && <p className="small muted" style={{ textAlign: 'center', padding: 24 }}>No transactions match these filters.</p>}
+      {data && data.items.length === 0 && <p className="small muted" style={{ textAlign: 'center', padding: 24 }}>{L('No transactions match these filters.', 'مفيش عمليات بالفلاتر دي.')}</p>}
       {data && groupByDay(data.items).map((g) => (
         <section key={g.label} className="stack" style={{ gap: 8 }}>
           <h3 className="small muted">{g.label}</h3>
@@ -111,9 +110,9 @@ export default function Activity() {
       ))}
       {data && data.totalPages > 1 && (
         <div className="between">
-          <button type="button" className="btn sm" disabled={page <= 1} onClick={() => setPage(page - 1)}>Previous</button>
-          <span className="small muted">Page {data.page} of {data.totalPages}</span>
-          <button type="button" className="btn sm" disabled={page >= data.totalPages} onClick={() => setPage(page + 1)}>Next</button>
+          <button type="button" className="btn sm" disabled={page <= 1} onClick={() => setPage(page - 1)}>{L('Previous', 'السابق')}</button>
+          <span className="small muted">{L('Page', 'صفحة')} {data.page} / {data.totalPages}</span>
+          <button type="button" className="btn sm" disabled={page >= data.totalPages} onClick={() => setPage(page + 1)}>{L('Next', 'التالي')}</button>
         </div>
       )}
     </main>

@@ -11,7 +11,7 @@ export const compact = (v) => {
 };
 
 export const time = (ms) =>
-  new Date(ms).toLocaleTimeString('en-US', { hour: 'numeric', minute: '2-digit', timeZone: 'Africa/Cairo' });
+  new Date(ms).toLocaleTimeString(ar() ? 'ar-EG-u-nu-latn' : 'en-US', { hour: 'numeric', minute: '2-digit', timeZone: 'Africa/Cairo' });
 
 export function day(ms) {
   const d = new Date(ms);
@@ -19,9 +19,9 @@ export function day(ms) {
   const key = (x) => x.toLocaleDateString('en-CA', opts);
   const today = new Date();
   const yesterday = new Date(Date.now() - 86_400_000);
-  if (key(d) === key(today)) return 'Today';
-  if (key(d) === key(yesterday)) return 'Yesterday';
-  return d.toLocaleDateString('en-US', { ...opts, day: 'numeric', month: 'short', year: 'numeric' });
+  if (key(d) === key(today)) return ar() ? 'النهارده' : 'Today';
+  if (key(d) === key(yesterday)) return ar() ? 'امبارح' : 'Yesterday';
+  return d.toLocaleDateString(ar() ? 'ar-EG-u-nu-latn' : 'en-US', { ...opts, day: 'numeric', month: 'short', year: 'numeric' });
 }
 
 export const dateTime = (ms) => `${day(ms)} · ${time(ms)}`;
@@ -35,15 +35,14 @@ export const greeting = () => {
 
 export const firstName = (full = '') => full.split(' ')[0];
 
-export const typeLabel = { SAVINGS: 'Savings account', CURRENT: 'Current account' };
+const ar = () => document.documentElement.lang === 'ar';
+const localized = (en, a) => new Proxy({}, { get: (_, k) => (ar() ? a[k] : en[k]) });
+export const typeLabel = localized({ SAVINGS: 'Savings account', CURRENT: 'Current account' }, { SAVINGS: 'حساب توفير', CURRENT: 'حساب جاري' });
 
-export const statusLabel = {
-  COMPLETED: 'Completed',
-  PENDING_OTP: 'Waiting for code',
-  PENDING_REVIEW: 'Under review',
-  REJECTED: 'Cancelled',
-  FAILED: 'Failed',
-};
+export const statusLabel = localized(
+  { COMPLETED: 'Completed', PENDING_OTP: 'Waiting for code', PENDING_REVIEW: 'Under review', REJECTED: 'Cancelled', FAILED: 'Failed' },
+  { COMPLETED: 'تمت', PENDING_OTP: 'مستني الكود', PENDING_REVIEW: 'تحت المراجعة', REJECTED: 'اتلغت', FAILED: 'فشلت' },
+);
 
 export const statusTone = {
   COMPLETED: 'ok',

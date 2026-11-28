@@ -103,8 +103,9 @@ public final class Ctx {
     public String body() {
         if (body == null) {
             try (InputStream in = exchange.getRequestBody()) {
-                byte[] bytes = in.readNBytes(MAX_BODY + 1);
-                if (bytes.length > MAX_BODY) {
+                int max = path().equals("/api/coach/receipt") ? 6 * 1024 * 1024 : MAX_BODY;
+                byte[] bytes = in.readNBytes(max + 1);
+                if (bytes.length > max) {
                     throw new ValidationException("TOO_LARGE", "Request is too large.");
                 }
                 body = new String(bytes, StandardCharsets.UTF_8);

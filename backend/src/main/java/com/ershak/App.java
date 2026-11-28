@@ -14,6 +14,7 @@ import com.ershak.web.WebServer;
  *   <li>PORT – HTTP port (default 7070)</li>
  *   <li>ERSHAK_DB – JDBC URL (default jdbc:sqlite:ershak.db)</li>
  *   <li>ERSHAK_DEMO_DATA – create demo customers on first start (default true)</li>
+ *   <li>GEMINI_API_KEY / GROQ_API_KEY – turn on the AI coach and receipt reading (optional)</li>
  *   <li>ERSHAK_ALLOWED_ORIGIN – web app origin when the frontend is hosted elsewhere (for deploy)</li>
  * </ul>
  */

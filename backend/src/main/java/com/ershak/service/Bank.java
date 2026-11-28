@@ -1,5 +1,7 @@
 package com.ershak.service;
 
+import com.ershak.coach.AiService;
+import com.ershak.coach.CoachService;
 import com.ershak.db.Database;
 import com.ershak.fraud.FraudEngine;
 import com.ershak.security.SessionManager;
@@ -19,6 +21,8 @@ public final class Bank {
     public final TransactionService transactions;
     public final GoalService goals;
     public final AdminService admin;
+    public final CoachService coach;
+    public final AiService ai;
 
     public Bank(Database db) {
         this.db = db;
@@ -32,6 +36,8 @@ public final class Bank {
         this.accounts = new AccountService(db, repos, settings, audit, notifications);
         this.transactions = new TransactionService(db, repos, settings, audit, notifications, fraudEngine);
         this.goals = new GoalService(db, repos, settings, audit, notifications);
+        this.coach = new CoachService(db, repos, notifications);
+        this.ai = new AiService(coach, goals::list, java.time.Clock.system(java.time.ZoneId.of("Africa/Cairo")));
         this.admin = new AdminService(db, repos, settings, audit, notifications, transactions, sessions, fraudEngine);
     }
 }

@@ -20,6 +20,7 @@ import com.ershak.web.Ctx;
 import com.ershak.web.WebServer;
 
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -142,6 +143,46 @@ public final class Api {
             ctx.json(body);
         });
 
+        // ----- coach: categories, expenses, budget, insights
+        app.get("/api/coach/categories", ctx -> ctx.json(bank.coach.categories(session(ctx).userId())));
+        app.post("/api/coach/categories", ctx -> ctx.status(201).json(bank.coach.addCategory(session(ctx).userId(),
+                ctx.str("name"), ctx.str("icon"), ctx.str("color"), ctx.bool("essential"))));
+        app.delete("/api/coach/categories/{id}", ctx -> {
+            bank.coach.deleteCategory(session(ctx).userId(), ctx.pathId());
+            ctx.status(204);
+        });
+        app.get("/api/coach/expenses", ctx -> ctx.json(bank.coach.expenses(session(ctx).userId(),
+                ctx.queryParam("month"))));
+        app.post("/api/coach/expenses", ctx -> ctx.status(201).json(bank.coach.addExpense(session(ctx).userId(),
+                ctx.lng("categoryId"), ctx.decimal("amount"), ctx.str("note"), ctx.str("merchant"),
+                expenseSource(ctx.str("source")), ctx.str("date"))));
+        app.put("/api/coach/expenses/{id}", ctx -> ctx.json(bank.coach.updateExpense(session(ctx).userId(),
+                ctx.pathId(), ctx.lng("categoryId"), ctx.decimal("amount"), ctx.str("note"), ctx.str("merchant"),
+                ctx.str("date"))));
+        app.delete("/api/coach/expenses/{id}", ctx -> {
+            bank.coach.deleteExpense(session(ctx).userId(), ctx.pathId());
+            ctx.status(204);
+        });
+        app.put("/api/coach/budget", ctx -> ctx.json(Map.of("month", String.valueOf(ctx.str("month")),
+                "amount", bank.coach.setBudget(session(ctx).userId(), ctx.str("month"), ctx.decimal("amount")))));
+        app.get("/api/coach/overview", ctx -> ctx.json(bank.coach.overview(session(ctx).userId(),
+                ctx.queryParam("month"))));
+        app.get("/api/coach/insights", ctx -> ctx.json(bank.coach.insights(session(ctx).userId(),
+                ctx.queryParam("month"))));
+        app.get("/api/coach/goals/{id}/plan", ctx -> ctx.json(bank.coach.goalPlan(session(ctx).userId(),
+                ctx.pathId())));
+        app.post("/api/coach/sms", ctx -> ctx.json(bank.coach.fromSms(session(ctx).userId(), ctx.str("text"))));
+        app.get("/api/coach/ai", ctx -> ctx.json(Map.of("enabled", bank.ai.enabled())));
+        app.post("/api/coach/chat", ctx -> {
+            Object messages = ctx.json().get("messages");
+            @SuppressWarnings("unchecked")
+            List<Map<String, Object>> list = messages instanceof List<?> l
+                    ? l.stream().filter(Map.class::isInstance).map(m -> (Map<String, Object>) m).toList() : List.of();
+            ctx.json(bank.ai.chat(session(ctx).userId(), list));
+        });
+        app.post("/api/coach/receipt", ctx -> ctx.json(bank.ai.readReceipt(session(ctx).userId(),
+                ctx.str("image"), ctx.str("mimeType"))));
+
         // ----- savings goals
         app.get("/api/goals", ctx -> ctx.json(
                 bank.goals.list(session(ctx).userId()).stream().map(GoalDto::of).toList()));
@@ -203,7 +244,6 @@ public final class Api {
             ctx.json().forEach((k, v) -> changes.put(k, String.valueOf(v)));
             ctx.json(bank.admin.updateSettings(session(ctx).username(), changes));
         });
-        app.post("/api/admin/interest", ctx -> ctx.json(bank.admin.applyMonthlyInterest(session(ctx).username())));
     }
 
     /** Every /api/ call except login, register and health needs a valid session; /api/admin/ needs an officer. */
@@ -236,6 +276,17 @@ public final class Api {
             return AccountType.valueOf(type == null ? "" : type.trim().toUpperCase());
         } catch (IllegalArgumentException e) {
             throw new ValidationException("Choose SAVINGS or CURRENT.");
+        }
+    }
+
+    private static com.ershak.coach.ExpenseSource expenseSource(String s) {
+        if (s == null || s.isBlank()) {
+            return com.ershak.coach.ExpenseSource.MANUAL;
+        }
+        try {
+            return com.ershak.coach.ExpenseSource.valueOf(s.trim().toUpperCase());
+        } catch (IllegalArgumentException e) {
+            throw new ValidationException("source must be MANUAL, RECEIPT, SMS or BANK.");
         }
     }
 }

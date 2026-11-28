@@ -62,14 +62,6 @@ class AccountTest {
     }
 
     @Test
-    @DisplayName("Monthly interest is 5% a year divided by 12, only on savings")
-    void monthlyInterest() {
-        assertEquals(Money.of("50.00"), account(AccountType.SAVINGS, "12000").monthlyInterest());
-        assertEquals(Money.ZERO, account(AccountType.CURRENT, "12000").monthlyInterest());
-        assertEquals(Money.ZERO, account(AccountType.SAVINGS, "0").monthlyInterest());
-    }
-
-    @Test
     @DisplayName("Held money is not available but still part of the balance")
     void holds() {
         Account a = account(AccountType.SAVINGS, "1000");

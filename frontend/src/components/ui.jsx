@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import Icon from './Icon';
+import { ArrowLeft } from 'lucide-react';
 import { amount, statusLabel, statusTone, time } from '../format';
 
 export function TopBar({ title, onBack, right }) {
@@ -9,7 +10,7 @@ export function TopBar({ title, onBack, right }) {
     <div className="topbar">
       <button type="button" className="icon-btn" aria-label="Back"
         onClick={() => (onBack ? onBack() : window.history.length > 1 ? navigate(-1) : navigate('/'))}>
-        <Icon name="back" />
+        <ArrowLeft size={20} className="flip" />
       </button>
       <h1>{title}</h1>
       <div className="spacer" />
@@ -79,7 +80,9 @@ export function TxRow({ tx }) {
   );
 }
 
-export const typeName = (tx) =>
+export const typeName = (tx) => (document.documentElement.lang === 'ar'
+  ? { DEPOSIT: 'إيداع', WITHDRAW: 'سحب', TRANSFER: 'تحويل', GOAL_DEPOSIT: 'هدف ادخار', GOAL_WITHDRAW: 'هدف ادخار', INTEREST: 'فوايد (قديم)' }[tx.type]
+  : null) ||
   ({
     DEPOSIT: 'Deposit',
     WITHDRAW: 'Withdrawal',
@@ -110,8 +113,8 @@ export function Empty({ icon = 'coin', title, children, action }) {
 export function AmountInput({ id, value, onChange, invalid, autoFocus }) {
   return (
     <div style={{ position: 'relative' }}>
-      <span className="muted" style={{ position: 'absolute', left: 16, top: 22, fontSize: 15, fontWeight: 500 }}>EGP</span>
-      <input
+      <span className="muted" style={{ position: 'absolute', left: 16, top: 22, fontSize: 15, fontWeight: 500, direction: 'ltr' }}>EGP</span>
+      <input dir="ltr"
         id={id}
         className={`input amount num${invalid ? ' invalid' : ''}`}
         style={{ paddingLeft: 58 }}
@@ -150,7 +153,7 @@ export function ErrorCard({ error, onRetry }) {
       <Icon name="shieldAlert" color="var(--bad)" />
       <div className="stack" style={{ gap: 8 }}>
         <p className="small">{error?.message || 'Something went wrong.'}</p>
-        {onRetry && <button type="button" className="btn sm" onClick={onRetry}>Try again</button>}
+        {onRetry && <button type="button" className="btn sm" onClick={onRetry}>{document.documentElement.lang === 'ar' ? 'جرّب تاني' : 'Try again'}</button>}
       </div>
     </div>
   );

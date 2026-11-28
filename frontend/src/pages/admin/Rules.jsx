@@ -11,7 +11,7 @@ const GROUPS = [
   { title: 'R4 · Late night', keys: [['r4_start_hour', 'From hour'], ['r4_end_hour', 'To hour'], ['r4_amount', 'From amount (EGP)'], ['r4_points', 'Points']] },
   { title: 'R5 · Drains the account', keys: [['r5_ratio', 'Share of balance (0-1)'], ['r5_points', 'Points']] },
   { title: 'R6 · Near the daily limit', keys: [['r6_ratio', 'Share of remaining limit (0-1)'], ['r6_points', 'Points']] },
-  { title: 'Limits and fees', keys: [['daily_transfer_limit', 'Daily transfer limit'], ['daily_withdraw_limit', 'Daily withdrawal limit'], ['transfer_fee', 'Transfer fee'], ['overdraft_limit', 'Current overdraft'], ['savings_monthly_outgoing', 'Savings outgoing per month'], ['savings_interest_rate', 'Savings yearly rate (0-1)']] },
+  { title: 'Limits and fees', keys: [['daily_transfer_limit', 'Daily transfer limit'], ['daily_withdraw_limit', 'Daily withdrawal limit'], ['transfer_fee', 'Transfer fee'], ['overdraft_limit', 'Current overdraft'], ['savings_monthly_outgoing', 'Savings outgoing per month']] },
   { title: 'Login security', keys: [['max_failed_logins', 'Wrong passwords before lock'], ['lock_minutes', 'Lock minutes'], ['session_timeout_minutes', 'Session timeout minutes']] },
 ];
 

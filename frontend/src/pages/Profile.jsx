@@ -7,8 +7,10 @@ import { useToast } from '../components/Toast';
 import { AmountInput, ErrorCard, Proverb, Sheet, Skeleton, useLoader } from '../components/ui';
 import { dateTime, egp, typeLabel } from '../format';
 import { play, setSoundOn, soundOn } from '../sound';
+import { useL } from '../prefs';
 
 export default function Profile() {
+  const L = useL();
   const { user, logout } = useAuth();
   const toast = useToast();
   const [params, setParams] = useSearchParams();
@@ -31,7 +33,7 @@ export default function Profile() {
   const copy = async (text) => {
     try {
       await navigator.clipboard.writeText(text);
-      toast('Account number copied.');
+      toast(L('Account number copied.', 'رقم الحساب اتنسخ.'));
     } catch {
       toast(text);
     }
@@ -50,8 +52,8 @@ export default function Profile() {
       </div>
 
       <div className="between">
-        <h2>Your accounts</h2>
-        <button type="button" className="btn sm primary" onClick={() => setOpening(true)}><Icon name="plus" size={16} stroke={2.2} /> Open account</button>
+        <h2>{L('Your accounts', 'حساباتك')}</h2>
+        <button type="button" className="btn sm primary" onClick={() => setOpening(true)}><Icon name="plus" size={16} stroke={2.2} /> {L('Open account', 'افتح حساب')}</button>
       </div>
       {accounts.loading && <Skeleton height={120} />}
       {accounts.error && <ErrorCard error={accounts.error} onRetry={accounts.reload} />}
@@ -59,25 +61,25 @@ export default function Profile() {
         <div key={a.id} className="card stack" style={{ gap: 10 }}>
           <div className="between">
             <h3>{typeLabel[a.type]}</h3>
-            <span className={`badge ${a.status === 'ACTIVE' ? 'ok' : 'bad'}`}>{a.status === 'ACTIVE' ? 'Active' : 'Frozen'}</span>
+            <span className={`badge ${a.status === 'ACTIVE' ? 'ok' : 'bad'}`}>{a.status === 'ACTIVE' ? L('Active', 'شغال') : L('Frozen', 'مجمّد')}</span>
           </div>
           <button type="button" className="between inset" style={{ border: 0, color: 'var(--text)', cursor: 'pointer', width: '100%' }} onClick={() => copy(a.accountNumber)}>
             <span className="num" style={{ letterSpacing: '0.06em' }}>{a.accountNumber.replace(/(\d{4})(?=\d)/g, '$1 ')}</span>
             <Icon name="copy" size={16} color="var(--muted)" />
           </button>
-          <div className="between small"><span className="muted">Balance</span><span className="num">{egp(a.balance)}</span></div>
+          <div className="between small"><span className="muted">{L('Balance', 'الرصيد')}</span><span className="num">{egp(a.balance)}</span></div>
           <p className="tiny muted">
-            {a.type === 'SAVINGS' ? '5% yearly interest, paid monthly · 4 withdrawals or transfers a month' : `Overdraft up to ${egp(a.overdraftLimit)} · no monthly limit`}
+            {a.type === 'SAVINGS' ? L('No interest · 4 withdrawals or transfers a month', 'من غير فوايد · 4 سحبات أو تحويلات في الشهر') : L(`Overdraft up to ${egp(a.overdraftLimit)} · no monthly limit`, `سحب على المكشوف لحد ${egp(a.overdraftLimit)} · من غير حد شهري`)}
           </p>
         </div>
       ))}
 
-      <h2>Phone inbox</h2>
-      <p className="tiny muted" style={{ marginTop: -12 }}>Simulated SMS: where your one-time codes arrive.</p>
-      {sms.data?.length === 0 && <p className="small muted">No messages yet.</p>}
+      <h2>{L('Phone inbox', 'رسايل الموبايل')}</h2>
+      <p className="tiny muted" style={{ marginTop: -12 }}>{L('Simulated SMS: where your one-time codes arrive.', 'رسايل تجريبية: هنا بيوصلك كود التأكيد.')}</p>
+      {sms.data?.length === 0 && <p className="small muted">{L('No messages yet.', 'مفيش رسايل لسه.')}</p>}
       {sms.data?.slice(0, 3).map((m) => (
         <div key={m.id} className="sms">
-          <img className="app-icon" src="/icon.png" alt="" />
+          <img className="app-icon" src="/ershak-coin2.png" alt="" />
           <div className="stack" style={{ gap: 2 }}>
             <p className="tiny muted">{dateTime(m.createdAt)}</p>
             <p className="small">{m.message}</p>
@@ -86,17 +88,17 @@ export default function Profile() {
       ))}
 
       <div className="card list">
-        <Link to="/change-password" className="tx"><div className="tx-icon"><Icon name="key" size={18} /></div><span className="tx-main">Change password</span><Icon name="chevron" size={18} color="var(--muted)" /></Link>
+        <Link to="/change-password" className="tx"><div className="tx-icon"><Icon name="key" size={18} /></div><span className="tx-main">{L('Change password', 'تغيير الباسورد')}</span><Icon name="chevron" size={18} color="var(--muted)" style={{ transform: L('none', 'scaleX(-1)') }} /></Link>
         <button type="button" className="tx" style={{ width: '100%', background: 'none', border: 0, cursor: 'pointer', fontSize: 15, color: 'var(--text)' }} onClick={toggleSound} role="switch" aria-checked={sound}>
           <div className="tx-icon"><Icon name="bell" size={18} /></div>
-          <span className="tx-main" style={{ textAlign: 'left' }}>Sounds</span>
-          <span className={`badge ${sound ? 'ok' : ''}`}>{sound ? 'On' : 'Off'}</span>
+          <span className="tx-main">{L('Sounds', 'الأصوات')}</span>
+          <span className={`badge ${sound ? 'ok' : ''}`}>{sound ? L('On', 'شغالة') : L('Off', 'مقفولة')}</span>
         </button>
         <button type="button" className="tx" style={{ width: '100%', background: 'none', border: 0, cursor: 'pointer', fontSize: 15 }} onClick={logout}>
-          <div className="tx-icon"><Icon name="logout" size={18} color="var(--bad)" /></div><span className="tx-main bad" style={{ textAlign: 'left' }}>Log out</span>
+          <div className="tx-icon"><Icon name="logout" size={18} color="var(--bad)" /></div><span className="tx-main bad">{L('Log out', 'خروج')}</span>
         </button>
       </div>
-      <Proverb style={{ textAlign: 'center', color: 'var(--muted)', fontSize: 16 }}>حط القرش عالقرش، واحنا نحرسه</Proverb>
+      
 
       {opening && <OpenAccount onClose={() => setOpening(false)} onDone={accounts.reload} />}
     </main>
@@ -104,6 +106,7 @@ export default function Profile() {
 }
 
 function OpenAccount({ onClose, onDone }) {
+  const L = useL();
   const toast = useToast();
   const [type, setType] = useState('SAVINGS');
   const [deposit, setDeposit] = useState('');
@@ -112,11 +115,11 @@ function OpenAccount({ onClose, onDone }) {
 
   const submit = async (e) => {
     e.preventDefault();
-    if (!(Number(deposit) >= 100)) return setError('The first deposit must be at least EGP 100.');
+    if (!(Number(deposit) >= 100)) return setError(L('The first deposit must be at least EGP 100.', 'أول إيداع لازم يكون 100 جنيه على الأقل.'));
     setBusy(true);
     try {
       const a = await post('/api/accounts', { type, initialDeposit: deposit });
-      toast(`Your ${typeLabel[a.type].toLowerCase()} ${a.maskedNumber} is ready.`);
+      toast(L(`Your ${typeLabel[a.type].toLowerCase()} ${a.maskedNumber} is ready.`, `${typeLabel[a.type]} ${a.maskedNumber} جاهز.`));
       onDone();
       onClose();
     } catch (err) {
@@ -127,17 +130,17 @@ function OpenAccount({ onClose, onDone }) {
   };
 
   const options = [
-    { v: 'SAVINGS', title: 'Savings', ar: 'القرش الأبيض', text: '5% yearly interest. Up to 4 withdrawals or transfers a month. Great for goals.' },
-    { v: 'CURRENT', title: 'Current', ar: 'للمصروف اليومي', text: 'For everyday spending. No monthly limit, overdraft up to EGP 2,000.' },
+    { v: 'SAVINGS', title: L('Savings', 'توفير'), ar: 'القرش الأبيض', text: L('No interest. Up to 4 withdrawals or transfers a month. Great for goals.', 'من غير فوايد. لحد 4 سحبات أو تحويلات في الشهر. مناسب للأهداف.') },
+    { v: 'CURRENT', title: L('Current', 'جاري'), ar: 'للمصروف اليومي', text: L('For everyday spending. No monthly limit, overdraft up to EGP 2,000.', 'للمصروف اليومي. من غير حد شهري، وسحب على المكشوف لحد 2,000 جنيه.') },
   ];
 
   return (
-    <Sheet title="Open an account" onClose={onClose}>
+    <Sheet title={L('Open an account', 'افتح حساب')} onClose={onClose}>
       <form className="stack-lg" onSubmit={submit} noValidate>
         <fieldset className="stack" style={{ border: 0, padding: 0, margin: 0, gap: 8 }}>
-          <legend className="label" style={{ marginBottom: 8 }}>Account type</legend>
+          <legend className="label" style={{ marginBottom: 8 }}>{L('Account type', 'نوع الحساب')}</legend>
           {options.map((o) => (
-            <label key={o.v} className="card tight stack" style={{ gap: 4, cursor: 'pointer', borderColor: type === o.v ? 'var(--accent)' : undefined }}>
+            <label key={o.v} className="card tight stack" style={{ gap: 4, cursor: 'pointer', borderColor: type === o.v ? 'var(--primary-text)' : undefined }}>
               <input type="radio" name="type" className="sr-only" checked={type === o.v} onChange={() => setType(o.v)} />
               <div className="between"><h3>{o.title}</h3><Proverb style={{ fontSize: 16 }}>{o.ar}</Proverb></div>
               <p className="small muted">{o.text}</p>
@@ -145,12 +148,12 @@ function OpenAccount({ onClose, onDone }) {
           ))}
         </fieldset>
         <div className="field">
-          <label htmlFor="deposit">First deposit</label>
+          <label htmlFor="deposit">{L('First deposit', 'أول إيداع')}</label>
           <AmountInput id="deposit" value={deposit} onChange={setDeposit} />
-          <p className="hint">At least EGP 100.</p>
+          <p className="hint">{L('At least EGP 100.', '100 جنيه على الأقل.')}</p>
         </div>
         {error && <p className="error-text">{error}</p>}
-        <button className="btn primary block" disabled={busy}>{busy ? 'Opening…' : 'Open account'}</button>
+        <button className="btn primary block" disabled={busy}>{busy ? L('Opening…', 'بيفتح…') : L('Open account', 'افتح الحساب')}</button>
       </form>
     </Sheet>
   );

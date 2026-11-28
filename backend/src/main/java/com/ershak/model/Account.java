@@ -11,7 +11,7 @@ import java.math.BigDecimal;
  * Base class for every bank account.
  * <p>
  * Subclasses decide the rules that differ between account types
- * (overdraft, monthly outgoing limit, interest) by overriding the abstract methods.
+ * (overdraft, monthly outgoing limit) by overriding the abstract methods.
  * This is where inheritance and polymorphism live in the project.
  */
 public abstract class Account {
@@ -46,8 +46,6 @@ public abstract class Account {
      */
     public abstract void checkOutgoingAllowed(int outgoingThisMonth);
 
-    /** Interest earned for one month on the current balance (zero for accounts without interest). */
-    public abstract BigDecimal monthlyInterest();
 
     /** Money the customer can use right now: balance minus held funds plus any overdraft. */
     public BigDecimal getAvailableBalance() {

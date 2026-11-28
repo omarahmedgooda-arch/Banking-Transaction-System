@@ -26,7 +26,6 @@ public final class BankSettings {
         d.put("transfer_fee", "2");
         d.put("overdraft_limit", "2000");
         d.put("savings_monthly_outgoing", "4");
-        d.put("savings_interest_rate", "0.05");
         d.put("max_failed_logins", "3");
         d.put("lock_minutes", "15");
         d.put("session_timeout_minutes", "5");
@@ -102,7 +101,6 @@ public final class BankSettings {
     public BigDecimal transferFee() { return Money.of(dec("transfer_fee")); }
     public BigDecimal overdraftLimit() { return Money.of(dec("overdraft_limit")); }
     public int savingsMonthlyOutgoing() { return integer("savings_monthly_outgoing"); }
-    public BigDecimal savingsInterestRate() { return dec("savings_interest_rate"); }
     public int maxFailedLogins() { return integer("max_failed_logins"); }
     public int lockMinutes() { return integer("lock_minutes"); }
     public int sessionTimeoutMinutes() { return integer("session_timeout_minutes"); }

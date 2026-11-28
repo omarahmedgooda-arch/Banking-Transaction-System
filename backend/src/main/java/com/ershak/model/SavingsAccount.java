@@ -4,20 +4,18 @@ import com.ershak.exception.LimitExceededException;
 import com.ershak.util.Money;
 
 import java.math.BigDecimal;
-import java.math.RoundingMode;
 
 /**
  * "El Ersh El Abyad": a savings account.
- * No overdraft, a limited number of outgoing operations per month, and monthly interest.
+ * No overdraft and a limited number of outgoing operations per month.
+ * It pays no interest (no riba): it is a place to put money aside for goals.
  */
 public class SavingsAccount extends Account {
 
     private final int monthlyOutgoingLimit;
-    private final BigDecimal annualInterestRate;
 
-    public SavingsAccount(int monthlyOutgoingLimit, BigDecimal annualInterestRate) {
+    public SavingsAccount(int monthlyOutgoingLimit) {
         this.monthlyOutgoingLimit = monthlyOutgoingLimit;
-        this.annualInterestRate = annualInterestRate;
     }
 
     @Override
@@ -38,20 +36,9 @@ public class SavingsAccount extends Account {
         }
     }
 
-    @Override
-    public BigDecimal monthlyInterest() {
-        if (getBalance().signum() <= 0) {
-            return Money.ZERO;
-        }
-        return getBalance().multiply(annualInterestRate)
-                .divide(BigDecimal.valueOf(12), 2, RoundingMode.HALF_EVEN);
-    }
 
     public int getMonthlyOutgoingLimit() {
         return monthlyOutgoingLimit;
     }
 
-    public BigDecimal getAnnualInterestRate() {
-        return annualInterestRate;
-    }
 }

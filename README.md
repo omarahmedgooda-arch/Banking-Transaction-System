@@ -1,14 +1,19 @@
 <p align="center">
-  <img src="frontend/public/logo.png" alt="Ershak" width="260">
+  <img src="frontend/public/ershak-logo2.png" alt="Ershak" width="260">
 </p>
 
-<p align="center"><b>حط القرش عالقرش، واحنا نحرسه</b><br>Stack your coins. We guard them.</p>
+<p align="center"><b>صوت ضميرك في فلوسك</b><br>Your money's conscience.</p>
 
 ---
 
-**Ershak (قِرشك)** is an online banking system with a built-in **Fraud Guard**.
-Customers open Savings and Current accounts, deposit, withdraw, transfer and save towards goals.
-Before any money leaves an account, the Fraud Guard scores the risk and decides:
+**Ershak (قِرشك)** is a personal-finance coach for Egyptian employees and families, with a bank and a **Fraud Guard** built in.
+Customers log what they spend (by hand, from a bank SMS, or from a receipt photo), see where their money goes and what kind of spender they are,
+get a plan to reach their savings goals, and chat with Ershak, a coach whose mood changes with how much of the budget is left.
+No interest anywhere: no loans, no interest-bearing accounts.
+
+Arabic and English, light and dark, installable as a web app.
+
+Before any money leaves a bank account, the Fraud Guard scores the risk and decides:
 
 | Risk score | What happens |
 |---|---|
@@ -43,9 +48,22 @@ To start over, stop the app and delete `ershak.db`.
 
 ## Features
 
+**Coach**
+- Quick add: log an expense in a few seconds with a keypad, recent categories and one-tap repeats; undo after saving.
+- Bank SMS reading (Arabic and English formats) and AI receipt reading. Photos are never stored.
+- 13 categories with icons, each marked essential or not; custom categories.
+- Monthly budget with alerts at 75%, 90% and 100%, and alerts when a category is far above usual.
+- Insights: essential vs non-essential, weekly bars, money personality, observations, month-to-month comparison.
+- Goal plans: how much you need per month and which non-essential spending to cut to get there.
+- Ask Ershak: an AI agent (Gemini, with Groq as fallback) that answers from your aggregated numbers and proposes actions
+  (log an expense, change the budget, create a goal) that you confirm one by one. It can never move money.
+  Without an API key the app falls back to built-in replies.
+- Zakat calculator (nisab from the gold price you enter, 2.5%).
+- Reminder settings: daily "how much did you spend today?", weekly summary, quiet hours.
+
 **Customers**
 - Register and log in. Passwords are hashed with salted PBKDF2. Three wrong passwords lock the login for 15 minutes (*التالتة تابتة*).
-- Savings accounts (5% yearly interest, 4 outgoing operations a month, no overdraft) and Current accounts (EGP 2,000 overdraft).
+- Savings accounts (no interest, 4 outgoing operations a month, no overdraft) and Current accounts (EGP 2,000 overdraft).
 - Deposit, withdraw and transfer, with daily limits and an EGP 2 fee for transfers to other people. Every transfer is atomic.
 - Explained risk: when a transfer is checked, the customer sees exactly which rules fired and why.
 - OTP confirmation with a simulated SMS inbox inside the app.
@@ -60,7 +78,6 @@ To start over, stop the app and delete `ershak.db`.
 - Customers: search, lock or unlock logins, freeze or unfreeze accounts.
 - Tamper-evident audit log: every entry stores the SHA-256 of the entry before it. *Verify integrity* finds any record edited directly in the database.
 - Fraud rules: every threshold and point value can be tuned. Changes are logged.
-- Monthly interest for savings accounts (runs once per month).
 
 ## The Fraud Guard
 
@@ -94,6 +111,26 @@ frontend/  React web app (Vite)  ──HTTP/JSON──►  backend/  Java 21
 - **OOP:** inheritance and polymorphism (`Account`), Factory (`AccountFactory`), Strategy (`FraudRule`), Singleton (`Database`), custom exception hierarchy (`BankException`).
 - **Money** is always `BigDecimal` with 2 decimals, never `double`.
 - **Security:** PBKDF2 password hashing, random session tokens with 5-minute inactivity timeout, login rate limiting, prepared statements (no SQL injection), ownership check on every account, security headers.
+
+## AI (optional)
+
+Set one or both keys before starting the server. Both have free tiers and need no card.
+
+```
+GEMINI_API_KEY=...   # https://aistudio.google.com/apikey
+GROQ_API_KEY=...     # https://console.groq.com/keys  (used if Gemini fails)
+```
+
+The server tries, in order: Gemini 3.5 Flash Lite, Gemini 3.1 Flash Lite, Gemma 4 31B and Gemma 4 26B (same Google key, 14.4K requests a day each), Groq,
+then any extra OpenAI-compatible providers you list:
+
+```
+AI_EXTRA_PROVIDERS="zai|https://api.z.ai/api/paas/v4|glm-4.7-flash|ZAI_API_KEY|false"
+# name | base URL | model | env var holding the key | reads images (true/false); separate several with ;
+```
+
+Only totals per category, the budget and goal progress are sent, never notes, merchants, names or account numbers.
+Limits: 40 chat messages and 15 receipts per customer per day.
 
 ## Develop
 
@@ -165,8 +202,14 @@ All endpoints are under `/api`. Send `Authorization: Bearer <token>` after loggi
 | GET, POST, DELETE | `/goals`, `/goals/{id}/contribute`, `/goals/{id}/withdraw` | Savings goals |
 | GET | `/notifications`, `/sms` · POST `/notifications/read-all` | Inbox |
 | GET | `/admin/overview`, `/admin/reviews`, `/admin/customers`, `/admin/audit`, `/admin/rules` | Officer |
-| POST | `/admin/reviews/{id}/approve` · `/reject`, `/admin/users/{id}/lock` · `/unlock`, `/admin/accounts/{id}/freeze` · `/unfreeze`, `/admin/audit/verify`, `/admin/interest` | Officer actions |
+| POST | `/admin/reviews/{id}/approve` · `/reject`, `/admin/users/{id}/lock` · `/unlock`, `/admin/accounts/{id}/freeze` · `/unfreeze`, `/admin/audit/verify` | Officer actions |
 | PUT | `/admin/settings` | Tune rules and limits |
+| GET, POST, DELETE | `/coach/categories`, `/coach/categories/{id}` | Spending categories |
+| GET, POST, PUT, DELETE | `/coach/expenses?month`, `/coach/expenses/{id}` | Expenses |
+| PUT · GET | `/coach/budget` · `/coach/overview?month`, `/coach/insights?month` | Budget, mood and insights |
+| GET | `/coach/goals/{id}/plan` | Goal plan (what to cut) |
+| POST | `/coach/sms` | Read a bank SMS |
+| GET · POST | `/coach/ai` · `/coach/chat`, `/coach/receipt` | AI status, agent, receipt reading |
 
 ---
 

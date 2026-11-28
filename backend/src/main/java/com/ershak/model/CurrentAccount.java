@@ -6,7 +6,7 @@ import java.math.BigDecimal;
 
 /**
  * A current (checking) account for everyday spending.
- * Allows an overdraft, has no monthly limit and earns no interest.
+ * Allows an overdraft, has no monthly limit.
  */
 public class CurrentAccount extends Account {
 
@@ -31,8 +31,4 @@ public class CurrentAccount extends Account {
         // No monthly limit on current accounts.
     }
 
-    @Override
-    public BigDecimal monthlyInterest() {
-        return Money.ZERO;
-    }
 }

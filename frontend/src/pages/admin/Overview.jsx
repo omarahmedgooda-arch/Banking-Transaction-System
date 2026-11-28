@@ -1,30 +1,12 @@
-import { useState } from 'react';
 import { Link } from 'react-router-dom';
-import { get, post } from '../../api';
+import { get } from '../../api';
 import Icon from '../../components/Icon';
-import { useToast } from '../../components/Toast';
 import { ErrorCard, Proverb, Skeleton, useLoader } from '../../components/ui';
 import { compact, time } from '../../format';
 import ReviewTable from './ReviewTable';
 
 export default function Overview() {
   const { data, error, loading, reload } = useLoader(() => get('/api/admin/overview'));
-  const toast = useToast();
-  const [paying, setPaying] = useState(false);
-
-  const payInterest = async () => {
-    setPaying(true);
-    try {
-      const r = await post('/api/admin/interest');
-      toast(r.message, r.applied ? 'ok' : 'bad');
-      reload();
-    } catch (err) {
-      toast(err.message, 'bad');
-    } finally {
-      setPaying(false);
-    }
-  };
-
   const today = new Date().toLocaleDateString('en-US', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'Africa/Cairo' });
 
   return (
@@ -34,9 +16,6 @@ export default function Overview() {
           <p className="small muted">{today}</p>
           <h1 style={{ marginTop: 4 }}>Overview</h1>
         </div>
-        <button type="button" className="btn sm" onClick={payInterest} disabled={paying}>
-          <Icon name="coin" size={16} /> {paying ? 'Paying…' : 'Pay monthly interest'}
-        </button>
       </div>
 
       {loading && <Skeleton height={110} />}

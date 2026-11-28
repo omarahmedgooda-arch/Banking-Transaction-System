@@ -12,5 +12,6 @@ export default defineConfig({
   build: {
     outDir: '../backend/src/main/resources/public',
     emptyOutDir: true,
+    assetsInlineLimit: 0,
   },
 });

@@ -47,7 +47,7 @@ public class SettingsService {
         return current();
     }
 
-    /** For system state such as the last month interest was paid (not admin-editable numbers). */
+    /** For system state that is not an admin-editable number. */
     public String getState(String key) {
         return db.read(c -> repos.settings().find(c, "state." + key).orElse(""));
     }

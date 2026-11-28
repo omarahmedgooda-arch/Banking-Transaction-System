@@ -15,7 +15,7 @@ export default function AdminLayout() {
     <div className="admin">
       <nav className="admin-nav" aria-label="Admin">
         <div className="row brand-row" style={{ padding: '0 8px 20px', gap: 10 }}>
-          <img src="/icon.png" alt="" width="36" height="36" />
+          <img src="/ershak-coin2.png" alt="" width="36" height="36" style={{ borderRadius: "50%" }} />
           <div>
             <p style={{ fontWeight: 700 }}>Ershak</p>
             <p className="tiny muted">Admin console</p>

@@ -109,3 +109,49 @@ CREATE TABLE IF NOT EXISTS settings (
     key   TEXT PRIMARY KEY,
     value TEXT NOT NULL
 );
+
+-- ===== Coach: personal-finance tracking (expenses, categories, budgets) =====
+
+-- Spending categories. user_id NULL = a built-in category everyone sees.
+CREATE TABLE IF NOT EXISTS categories (
+    id         INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id    INTEGER REFERENCES users (id),
+    code       TEXT,
+    name_ar    TEXT    NOT NULL,
+    name_en    TEXT    NOT NULL,
+    icon       TEXT    NOT NULL,
+    color      TEXT    NOT NULL,
+    essential  INTEGER NOT NULL CHECK (essential IN (0, 1)),
+    sort_order INTEGER NOT NULL DEFAULT 100,
+    created_at INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_categories_user ON categories (user_id);
+
+CREATE TABLE IF NOT EXISTS expenses (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id     INTEGER NOT NULL REFERENCES users (id),
+    category_id INTEGER NOT NULL REFERENCES categories (id),
+    amount      TEXT    NOT NULL,
+    note        TEXT,
+    merchant    TEXT,
+    source      TEXT    NOT NULL CHECK (source IN ('MANUAL', 'RECEIPT', 'SMS', 'BANK')),
+    spent_at    INTEGER NOT NULL,
+    created_at  INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_expenses_user ON expenses (user_id, spent_at);
+
+-- One spending budget per user per month (month = 'YYYY-MM').
+CREATE TABLE IF NOT EXISTS budgets (
+    user_id INTEGER NOT NULL REFERENCES users (id),
+    month   TEXT    NOT NULL,
+    amount  TEXT    NOT NULL,
+    PRIMARY KEY (user_id, month)
+);
+
+-- Alerts already sent, so the same alert is not repeated in a month.
+CREATE TABLE IF NOT EXISTS coach_alerts (
+    user_id INTEGER NOT NULL REFERENCES users (id),
+    month   TEXT    NOT NULL,
+    code    TEXT    NOT NULL,
+    PRIMARY KEY (user_id, month, code)
+);

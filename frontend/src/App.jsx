@@ -4,7 +4,17 @@ import Icon from './components/Icon';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import ChangePassword from './pages/ChangePassword';
-import Home from './pages/Home';
+import Accounts from './pages/Accounts';
+import CoachHome from './pages/coach/CoachHome';
+import Expenses from './pages/coach/Expenses';
+import Chat from './pages/coach/Chat';
+import Settings, { Setup } from './pages/coach/Settings';
+import Onboarding from './pages/coach/Onboarding';
+import { Budget, Zakat } from './pages/coach/Tools';
+import QuickAdd from './components/QuickAdd';
+import { useQuickAdd } from './coach';
+import { usePrefs } from './prefs';
+import { Home as HomeI, MessageCircle, Plus, ReceiptText, Target } from 'lucide-react';
 import Transfer from './pages/Transfer';
 import Move from './pages/Move';
 import Activity from './pages/Activity';
@@ -22,7 +32,7 @@ import Rules from './pages/admin/Rules';
 function Splash() {
   return (
     <div className="auth" style={{ justifyContent: 'center', alignItems: 'center' }}>
-      <img src="/icon.png" alt="Ershak" width="64" height="64" />
+      <img src="/ershak-coin2.png" alt="Ershak" width="72" height="72" className="coin" style={{ width: 72, height: 72 }} />
     </div>
   );
 }
@@ -30,8 +40,9 @@ function Splash() {
 /** Guards a group of routes: must be logged in, must have changed a forced password, right role. */
 function Guard({ role }) {
   const { user, ready } = useAuth();
+  const { prefs } = usePrefs();
   if (!ready) return <Splash />;
-  if (!user) return <Navigate to="/login" replace />;
+  if (!user) return <Navigate to={prefs.onboarded ? '/login' : '/welcome'} replace />;
   if (user.mustChangePassword) return <Navigate to="/change-password" replace />;
   if (role === 'ADMIN' && user.role !== 'ADMIN') return <Navigate to="/" replace />;
   if (role === 'CUSTOMER' && user.role === 'ADMIN') return <Navigate to="/admin" replace />;
@@ -39,42 +50,66 @@ function Guard({ role }) {
 }
 
 function CustomerLayout() {
+  const { t, dark } = usePrefs();
+  const { show } = useQuickAdd();
   const tabs = [
-    { to: '/', icon: 'home', label: 'Home', end: true },
-    { to: '/activity', icon: 'list', label: 'Activity' },
-    { to: '/goals', icon: 'goal', label: 'Goals' },
-    { to: '/profile', icon: 'user', label: 'Profile' },
+    { to: '/', icon: HomeI, label: t('home'), end: true },
+    { to: '/expenses', icon: ReceiptText, label: t('expenses') },
+    null,
+    { to: '/goals', icon: Target, label: t('goals') },
+    { to: '/chat', icon: MessageCircle, label: t('ershak') },
   ];
   return (
     <div className="app">
       <Outlet />
       <nav className="tabbar" aria-label="Main">
-        {tabs.map((t) => (
-          <NavLink key={t.to} to={t.to} end={t.end}>
-            <Icon name={t.icon} size={22} />
-            {t.label}
+        <img src={dark ? '/ershak-logo2-dark.png' : '/ershak-logo2.png'} alt="قرشك" className="brand-side" style={{ width: 150 }} />
+        {tabs.map((tb) => (tb ? (
+          <NavLink key={tb.to} to={tb.to} end={tb.end}>
+            <tb.icon size={22} strokeWidth={1.9} />
+            {tb.label}
           </NavLink>
-        ))}
+        ) : (
+          <button key="fab" type="button" className="fab" aria-label={t('add')} onClick={() => show()}>
+            <Plus size={26} strokeWidth={2.4} /><span className="fab-label">{t('add')}</span>
+          </button>
+        )))}
       </nav>
+      <QuickAdd />
     </div>
   );
+}
+
+function SetupGate() {
+  const { prefs } = usePrefs();
+  return prefs.setupDone ? <Outlet /> : <Navigate to="/setup" replace />;
 }
 
 export default function App() {
   return (
     <Routes>
+      <Route path="/welcome" element={<Onboarding />} />
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
       <Route path="/change-password" element={<ChangePassword />} />
 
       <Route element={<Guard role="CUSTOMER" />}>
-        <Route element={<CustomerLayout />}>
-          <Route index element={<Home />} />
-          <Route path="activity" element={<Activity />} />
-          <Route path="goals" element={<Goals />} />
-          <Route path="profile" element={<Profile />} />
+        <Route path="setup" element={<Setup />} />
+        <Route element={<SetupGate />}>
+          <Route element={<CustomerLayout />}>
+            <Route index element={<CoachHome />} />
+            <Route path="expenses" element={<Expenses />} />
+            <Route path="goals" element={<Goals />} />
+            <Route path="chat" element={<Chat />} />
+          </Route>
         </Route>
-        <Route element={<div className="app"><Outlet /></div>}>
+        <Route element={<div className="app"><Outlet /><QuickAdd /></div>}>
+          <Route path="accounts" element={<Accounts />} />
+          <Route path="activity" element={<Activity />} />
+          <Route path="profile" element={<Profile />} />
+          <Route path="settings" element={<Settings />} />
+          <Route path="budget" element={<Budget />} />
+          <Route path="zakat" element={<Zakat />} />
           <Route path="transfer" element={<Transfer />} />
           <Route path="move/:mode" element={<Move />} />
           <Route path="tx/:id" element={<TransactionDetail />} />

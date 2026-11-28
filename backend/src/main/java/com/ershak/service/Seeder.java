@@ -49,6 +49,62 @@ public final class Seeder {
         }
         if (demoData) {
             seedTeam(bank);
+            seedCoach(bank);
+        }
+    }
+
+    /**
+     * Gives every demo customer three months of everyday spending and a 9,000 EGP monthly budget,
+     * so the coach screens (mood, analysis, alerts, goal plan) have something real to show.
+     * Skips customers who already have a budget.
+     */
+    private static void seedCoach(Bank bank) {
+        com.ershak.coach.CoachDao dao = new com.ershak.coach.CoachDao();
+        java.time.YearMonth now = java.time.YearMonth.from(BankClock.now());
+        int today = BankClock.now().getDayOfMonth();
+        // day of month, category code, amount, note, merchant (outings mostly on Thursday/Friday nights)
+        Object[][] month = {
+            {1, "subscriptions", "165", "Netflix", "NETFLIX"}, {1, "subscriptions", "175", "شاهد", "SHAHID"},
+            {2, "groceries", "620", "طلبات البيت", "CARREFOUR"}, {3, "transport", "180", "بنزين", "WATANIYA"},
+            {4, "outings", "240", "قهوة", "STARBUCKS"}, {5, "bills", "650", "فاتورة الكهربا", null},
+            {6, "outings", "320", "عشا مع الشلة", "TALABAT"}, {7, "transport", "120", "أوبر", "UBER"},
+            {8, "groceries", "410", "خضار وفاكهة", null}, {9, "bills", "450", "النت", "WE"},
+            {10, "health", "210", "دوا", "EL EZABY"}, {11, "clothes", "610", "قميص وبنطلون", "DEFACTO"},
+            {12, "outings", "180", "سينما", "VOX"}, {13, "outings", "260", "كافيه", null},
+            {14, "groceries", "520", "طلبات البيت", "SEOUDI"}, {15, "bills", "300", "كارت فودافون", "VODAFONE"},
+            {16, "transport", "200", "بنزين", "WATANIYA"}, {17, "charity", "200", "صدقة", "RESALA"},
+            {18, "outings", "200", "قهوة مع الشغل", null}, {20, "groceries", "300", "عيش ولبن", null},
+            {21, "transport", "150", "مواصلات", null}, {22, "bills", "150", "الغاز", null},
+            {24, "gifts", "350", "هدية عيد ميلاد", null}, {25, "outings", "340", "خروجة الويك إند", null},
+            {27, "groceries", "450", "طلبات البيت", "CARREFOUR"}, {28, "health", "120", "كشف", null},
+        };
+        for (User u : bank.db.read(c -> bank.repos.users().findByRole(c, Role.CUSTOMER))) {
+            boolean has = bank.db.read(c -> dao.latestBudget(c, u.getId(), now.toString()).isPresent());
+            if (has) {
+                continue;
+            }
+            bank.db.inTransaction(c -> {
+                for (int back = 2; back >= 0; back--) {
+                    java.time.YearMonth ym = now.minusMonths(back);
+                    dao.putBudget(c, u.getId(), ym.toString(), new BigDecimal("9000"));
+                    for (Object[] e : month) {
+                        int day = (Integer) e[0];
+                        if (day > ym.lengthOfMonth() || (back == 0 && day > today)) {
+                            continue;
+                        }
+                        BigDecimal amount = new BigDecimal((String) e[2]);
+                        // Last month people went out less, so this month shows a real increase.
+                        if (back == 1 && "outings".equals(e[1])) {
+                            amount = amount.multiply(new BigDecimal("0.7")).setScale(0, java.math.RoundingMode.HALF_UP);
+                        }
+                        long cat = dao.findBuiltInByCode(c, (String) e[1]).orElseThrow().id();
+                        long when = ym.atDay(day).atTime(20, 0).atZone(BankClock.ZONE).toInstant().toEpochMilli();
+                        dao.insertExpense(c, new com.ershak.coach.Expense(0, u.getId(), cat, amount.setScale(2),
+                                (String) e[3], (String) e[4], com.ershak.coach.ExpenseSource.MANUAL, when, when));
+                    }
+                }
+                return null;
+            });
         }
     }
 

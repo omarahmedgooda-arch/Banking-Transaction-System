@@ -46,8 +46,6 @@ public class AdminService {
                                boolean locked, long lockedUntil, long createdAt, List<AccountSummary> accounts) {
     }
 
-    public record InterestResult(boolean applied, String month, int accounts, BigDecimal total, String message) {
-    }
 
     public record RuleInfo(String id, String description) {
     }
@@ -178,43 +176,6 @@ public class AdminService {
         });
     }
 
-    /** Credits one month of interest to every active savings account. Runs at most once per month. */
-    public InterestResult applyMonthlyInterest(String adminName) {
-        BankSettings s = settings.current();
-        String month = YearMonth.from(BankClock.now()).toString();
-        return db.inTransaction(c -> {
-            String last = repos.settings().find(c, "state.last_interest_month").orElse("");
-            if (month.equals(last)) {
-                return new InterestResult(false, month, 0, Money.ZERO, "Interest for " + month + " was already paid.");
-            }
-            int count = 0;
-            BigDecimal total = Money.ZERO;
-            long now = BankClock.nowMillis();
-            for (Account a : repos.accounts().findAllActive(c, s)) {
-                BigDecimal interest = a.monthlyInterest();
-                if (interest.signum() <= 0) {
-                    continue;
-                }
-                a.credit(interest);
-                repos.accounts().update(c, a);
-                Transaction t = new Transaction(TransactionType.INTEREST, null, a.getId(), interest, Money.ZERO, a.getUserId());
-                t.setReference(ReferenceGenerator.next(c, repos));
-                t.setStatus(TransactionStatus.COMPLETED);
-                t.setCreatedAt(now);
-                t.setCompletedAt(now);
-                t.setNote("Interest " + month);
-                repos.transactions().insert(c, t);
-                notifications.notify(c, a.getUserId(), "INTEREST", "القرش الأبيض كبر",
-                        Money.format(interest) + " interest was added to " + a.getMaskedNumber() + ".");
-                count++;
-                total = total.add(interest);
-            }
-            repos.settings().put(c, "state.last_interest_month", month);
-            audit.append(c, adminName, "INTEREST_APPLIED", month + ": " + count + " accounts, " + Money.format(total));
-            return new InterestResult(true, month, count, total,
-                    "Paid " + Money.format(total) + " to " + count + " savings accounts.");
-        });
-    }
 
     public List<AuditEntry> auditLog(int limit) {
         return audit.recent(limit);
