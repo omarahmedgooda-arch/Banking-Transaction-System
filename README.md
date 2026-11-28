@@ -50,7 +50,8 @@ No loans, no interest-bearing accounts, no "buy now, pay later". When you want s
 - **Goal plans:** how much you need per month, how much you're saving now, and which non-essential spending to cut to close the gap.
 - **Ask Ershak:** an AI agent that answers from your numbers and proposes actions (log an expense, change the budget, create a goal) that you confirm one by one. It can never move money.
 - **Zakat calculator:** nisab from today's gold price, 2.5%.
-- **Reminders:** a daily "how much did you spend today?", a weekly summary, and quiet hours.
+- **Real push notifications** (Web Push, written on the JDK: VAPID + aes128gcm): a daily "how much did you spend today?" that stays quiet if you already logged something, a weekly summary on the day you pick, budget alerts, and Fraud Guard alerts. Quiet hours are respected, except for security alerts.
+- **Installable** on Android, iPhone and desktop (PWA), with an offline app shell and a "log expense" shortcut.
 
 ### Bank
 - Savings accounts (no interest, 4 outgoing operations a month) and Current accounts (EGP 2,000 overdraft).
@@ -244,6 +245,7 @@ All endpoints are under `/api`. Send `Authorization: Bearer <token>` after loggi
 | GET | `/coach/goals/{id}/plan` | Goal plan |
 | POST | `/coach/sms` | Read a bank SMS |
 | GET · POST | `/coach/ai` · `/coach/chat`, `/coach/receipt` | AI status, agent, receipts |
+| GET, PUT · POST | `/push/key`, `/push/prefs` · `/push/subscribe`, `/push/unsubscribe`, `/push/test` | Push notifications and reminders |
 | GET | `/admin/overview`, `/admin/reviews`, `/admin/customers`, `/admin/audit`, `/admin/rules` | Officer |
 | POST | `/admin/reviews/{id}/approve` · `/reject`, `/admin/users/{id}/lock` · `/unlock`, `/admin/accounts/{id}/freeze` · `/unfreeze`, `/admin/audit/verify` | Officer actions |
 | PUT | `/admin/settings` | Tune rules and limits |

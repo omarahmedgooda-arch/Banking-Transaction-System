@@ -172,6 +172,26 @@ public final class Api {
         app.get("/api/coach/goals/{id}/plan", ctx -> ctx.json(bank.coach.goalPlan(session(ctx).userId(),
                 ctx.pathId())));
         app.post("/api/coach/sms", ctx -> ctx.json(bank.coach.fromSms(session(ctx).userId(), ctx.str("text"))));
+        // ----- push notifications
+        app.get("/api/push/key", ctx -> ctx.json(Map.of("publicKey", bank.push.publicKey())));
+        app.post("/api/push/subscribe", ctx -> {
+            long uid = session(ctx).userId();
+            bank.push.subscribe(uid, ctx.str("endpoint"), ctx.str("p256dh"), ctx.str("auth"));
+            ctx.json(Map.of("devices", bank.push.deviceCount(uid)));
+        });
+        app.post("/api/push/unsubscribe", ctx -> {
+            bank.push.unsubscribe(session(ctx).userId(), ctx.str("endpoint"));
+            ctx.status(204);
+        });
+        app.get("/api/push/prefs", ctx -> {
+            long uid = session(ctx).userId();
+            ctx.json(Map.of("prefs", bank.push.prefs(uid), "devices", bank.push.deviceCount(uid)));
+        });
+        app.put("/api/push/prefs", ctx -> ctx.json(bank.push.savePrefs(session(ctx).userId(),
+                new com.ershak.service.PushService.Prefs(ctx.bool("daily"), ctx.str("time"), ctx.bool("weekly"),
+                        ctx.str("weeklyDay"), ctx.bool("budget"), ctx.bool("goals"), ctx.str("quietFrom"),
+                        ctx.str("quietTo")))));
+        app.post("/api/push/test", ctx -> ctx.json(Map.of("sent", bank.push.sendTest(session(ctx).userId()))));
         app.get("/api/coach/ai", ctx -> ctx.json(Map.of("enabled", bank.ai.enabled())));
         app.post("/api/coach/chat", ctx -> {
             Object messages = ctx.json().get("messages");

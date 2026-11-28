@@ -7,6 +7,9 @@ import { ToastProvider } from './components/Toast';
 import { PrefsProvider } from './prefs';
 import { QuickAddProvider } from './coach';
 import './styles.css';
+import { registerServiceWorker } from './push';
+
+registerServiceWorker();
 
 ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>

@@ -155,3 +155,31 @@ CREATE TABLE IF NOT EXISTS coach_alerts (
     code    TEXT    NOT NULL,
     PRIMARY KEY (user_id, month, code)
 );
+
+-- ===== Push notifications (Web Push) =====
+
+-- One row per browser/device that allowed notifications.
+CREATE TABLE IF NOT EXISTS push_subscriptions (
+    id          INTEGER PRIMARY KEY AUTOINCREMENT,
+    user_id     INTEGER NOT NULL REFERENCES users(id),
+    endpoint    TEXT    NOT NULL UNIQUE,
+    p256dh      TEXT    NOT NULL,
+    auth        TEXT    NOT NULL,
+    created_at  INTEGER NOT NULL
+);
+CREATE INDEX IF NOT EXISTS idx_push_user ON push_subscriptions(user_id);
+
+-- When and what to remind each customer about. Times are Cairo local "HH:MM".
+CREATE TABLE IF NOT EXISTS reminder_prefs (
+    user_id      INTEGER PRIMARY KEY REFERENCES users(id),
+    daily        INTEGER NOT NULL DEFAULT 1,
+    time         TEXT    NOT NULL DEFAULT '21:00',
+    weekly       INTEGER NOT NULL DEFAULT 1,
+    weekly_day   TEXT    NOT NULL DEFAULT 'fri',
+    budget       INTEGER NOT NULL DEFAULT 1,
+    goals        INTEGER NOT NULL DEFAULT 1,
+    quiet_from   TEXT    NOT NULL DEFAULT '00:00',
+    quiet_to     TEXT    NOT NULL DEFAULT '08:00',
+    last_daily   TEXT,
+    last_weekly  TEXT
+);

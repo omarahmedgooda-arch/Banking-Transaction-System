@@ -23,6 +23,7 @@ public final class Bank {
     public final AdminService admin;
     public final CoachService coach;
     public final AiService ai;
+    public final PushService push;
 
     public Bank(Database db) {
         this.db = db;
@@ -38,6 +39,8 @@ public final class Bank {
         this.goals = new GoalService(db, repos, settings, audit, notifications);
         this.coach = new CoachService(db, repos, notifications);
         this.ai = new AiService(coach, goals::list, java.time.Clock.system(java.time.ZoneId.of("Africa/Cairo")));
+        this.push = new PushService(db, coach);
+        notifications.listen(push::onNotification);
         this.admin = new AdminService(db, repos, settings, audit, notifications, transactions, sessions, fraudEngine);
     }
 }

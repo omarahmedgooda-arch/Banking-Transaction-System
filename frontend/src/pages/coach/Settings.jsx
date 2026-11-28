@@ -1,6 +1,8 @@
-import { useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { BarChart3, Bell, ChevronLeft, ChevronRight, KeyRound, Languages, LogOut, Moon, PiggyBank, Receipt, Target, UserRound, Wallet } from 'lucide-react';
+import { BarChart3, Bell, BellRing, ChevronLeft, ChevronRight, Download, KeyRound, Languages, LogOut, Moon, PiggyBank, Receipt, Share, Target, UserRound, Wallet } from 'lucide-react';
+import { canPromptInstall, enablePush, isIos, isStandalone, onInstallChange, permission, promptInstall, pushSupported, savePushPrefs, sendTestPush } from '../../push';
+import { useToast } from '../../components/Toast';
 import { put } from '../../api';
 import { useAuth } from '../../auth';
 import { monthKey, money } from '../../coach';
@@ -21,18 +23,41 @@ function Row({ icon: I, label, children, to }) {
   return to ? <Link to={to} className="tx">{inner}</Link> : <div className="tx" style={{ cursor: 'default' }}>{inner}</div>;
 }
 
+/** Asks for notification permission and subscribes this device. */
 export async function askNotifications() {
-  if (!('Notification' in window)) return 'unsupported';
-  if (Notification.permission === 'default') return Notification.requestPermission();
-  return Notification.permission;
+  try {
+    return await enablePush();
+  } catch {
+    return permission();
+  }
 }
 
 export default function Settings() {
   const { t, prefs, update } = usePrefs();
   const { user, logout } = useAuth();
-  const [perm, setPerm] = useState(() => ('Notification' in window ? Notification.permission : 'unsupported'));
+  const toast = useToast();
+  const [perm, setPerm] = useState(permission);
+  const [installable, setInstallable] = useState(canPromptInstall);
   const r = prefs.reminder;
   const setR = (patch) => update((p) => ({ reminder: { ...p.reminder, ...patch } }));
+  const ar = prefs.lang === 'ar';
+  const first = useRef(true);
+
+  useEffect(() => onInstallChange(setInstallable), []);
+  // Save reminder settings on the server (it sends the reminders), a moment after the last change.
+  useEffect(() => {
+    if (first.current) { first.current = false; return undefined; }
+    const id = setTimeout(() => savePushPrefs(r).catch((e) => toast(e.message, 'bad')), 600);
+    return () => clearTimeout(id);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [r]);
+
+  const test = async () => {
+    try {
+      const { sent } = await sendTestPush();
+      toast(sent ? (ar ? 'بعتنا إشعار تجربة' : 'Test notification sent') : (ar ? 'مفيش جهاز مفعّل عليه الإشعارات' : 'No device has notifications on'), sent ? 'ok' : 'bad');
+    } catch (e) { toast(e.message, 'bad'); }
+  };
 
   return (
     <main className="page narrow">
@@ -61,19 +86,57 @@ export default function Settings() {
         </div>
       </section>
 
+      {!isStandalone() && (installable || isIos()) && (
+        <section className="card row">
+          <span className="tx-icon"><Download size={19} color="var(--copper)" /></span>
+          <div className="tx-main">
+            <p className="small" style={{ fontWeight: 700 }}>{ar ? 'سطّب قرشك على موبايلك' : 'Install Ershak'}</p>
+            <p className="tiny muted">
+              {installable ? (ar ? 'يفتح زي أي تطبيق، من غير المتصفح.' : 'Opens like an app, without the browser.')
+                : (ar ? 'في Safari دوس زرار المشاركة، وبعدين «أضف إلى الشاشة الرئيسية».' : 'In Safari tap Share, then “Add to Home Screen”.')}
+            </p>
+          </div>
+          {installable ? <button type="button" className="btn sm primary" onClick={promptInstall}>{ar ? 'سطّب' : 'Install'}</button>
+            : <Share size={20} color="var(--muted)" />}
+        </section>
+      )}
+
       <h2>{t('reminders')}</h2>
       <section className="card list">
         {perm !== 'granted' && (
           <div className="tx" style={{ cursor: 'default' }}>
             <span className="tx-icon"><Bell size={19} color="var(--copper)" /></span>
-            <span className="tx-main small">{perm === 'denied' ? t('notifDenied') : t('enableNotif')}</span>
-            {perm !== 'denied' && perm !== 'unsupported' && <button type="button" className="btn sm primary" onClick={async () => setPerm(await askNotifications())}>{t('enableNotif')}</button>}
+            <span className="tx-main small">
+              {perm === 'denied' ? t('notifDenied')
+                : !pushSupported() ? (isIos() && !isStandalone() ? (ar ? 'على الآيفون: سطّب التطبيق الأول، وبعدين فعّل الإشعارات من جوه.' : 'On iPhone, install the app first, then turn on notifications inside it.') : (ar ? 'المتصفح ده مش بيدعم الإشعارات.' : 'This browser does not support notifications.'))
+                  : t('enableNotif')}
+            </span>
+            {perm === 'default' && pushSupported() && (
+              <button type="button" className="btn sm primary" onClick={async () => {
+                const res = await askNotifications();
+                setPerm(res);
+                if (res === 'granted') savePushPrefs(r).catch(() => {});
+              }}>{t('enableNotif')}</button>
+            )}
+          </div>
+        )}
+        {perm === 'granted' && (
+          <div className="tx" style={{ cursor: 'default' }}>
+            <span className="tx-icon"><BellRing size={19} color="var(--good)" /></span>
+            <span className="tx-main small" style={{ fontWeight: 600 }}>{ar ? 'الإشعارات شغالة على الجهاز ده' : 'Notifications are on for this device'}</span>
+            <button type="button" className="btn sm" onClick={test}>{ar ? 'جرّب' : 'Test'}</button>
           </div>
         )}
         <Toggle label={t('dailyReminder')} on={r.daily} set={(v) => setR({ daily: v })}>
           <input type="time" className="input" style={{ width: 128, height: 40 }} value={r.time} onChange={(e) => setR({ time: e.target.value })} disabled={!r.daily} aria-label="time" />
         </Toggle>
-        <Toggle label={t('weeklySummary')} on={r.weekly} set={(v) => setR({ weekly: v })} />
+        <Toggle label={t('weeklySummary')} on={r.weekly} set={(v) => setR({ weekly: v })}>
+          <select className="input" style={{ width: 110, height: 40, paddingInline: 8 }} value={r.weeklyDay || 'fri'} disabled={!r.weekly}
+            onChange={(e) => setR({ weeklyDay: e.target.value })} aria-label="day">
+            {[['sat', 'السبت', 'Sat'], ['sun', 'الحد', 'Sun'], ['mon', 'الاتنين', 'Mon'], ['tue', 'التلات', 'Tue'], ['wed', 'الأربع', 'Wed'], ['thu', 'الخميس', 'Thu'], ['fri', 'الجمعة', 'Fri']]
+              .map(([v, a, e]) => <option key={v} value={v}>{ar ? a : e}</option>)}
+          </select>
+        </Toggle>
         <Toggle label={t('budgetAlerts')} on={r.budget} set={(v) => setR({ budget: v })} />
         <Toggle label={t('goalNudges')} on={r.goals} set={(v) => setR({ goals: v })} />
         <div className="tx" style={{ cursor: 'default' }}>
@@ -117,7 +180,7 @@ function Toggle({ label, on, set, children }) {
 
 /** First-run wizard: budget, then reminders. */
 export function Setup() {
-  const { t, update } = usePrefs();
+  const { t, update, prefs } = usePrefs();
   const navigate = useNavigate();
   const [step, setStep] = useState(0);
   const [budget, setBudget] = useState('');
@@ -156,7 +219,11 @@ export function Setup() {
           <h1>{t('dailyReminder')}</h1>
           <p className="small muted">هبعتلك تذكير واحد في اليوم علشان متنساش تسجّل. لو سجّلت قبلها مش هزعجك.</p>
           <input type="time" className="input" value={time} onChange={(e) => setTime(e.target.value)} />
-          <button type="button" className="btn primary block" onClick={async () => { await askNotifications(); finish(); }}>{t('letsGo')}</button>
+          <button type="button" className="btn primary block" onClick={async () => {
+            const res = await askNotifications();
+            if (res === 'granted') savePushPrefs({ ...prefs.reminder, time }).catch(() => {});
+            finish();
+          }}>{t('letsGo')}</button>
         </div>
       )}
     </div>

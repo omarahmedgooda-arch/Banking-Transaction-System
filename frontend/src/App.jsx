@@ -15,6 +15,9 @@ import QuickAdd from './components/QuickAdd';
 import { useQuickAdd } from './coach';
 import { usePrefs } from './prefs';
 import { Home as HomeI, MessageCircle, Plus, ReceiptText, Target } from 'lucide-react';
+import { useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
+import { enablePush, permission, savePushPrefs } from './push';
 import Transfer from './pages/Transfer';
 import Move from './pages/Move';
 import Activity from './pages/Activity';
@@ -50,8 +53,25 @@ function Guard({ role }) {
 }
 
 function CustomerLayout() {
-  const { t, dark } = usePrefs();
+  const { t, dark, prefs } = usePrefs();
   const { show } = useQuickAdd();
+  const [params, setParams] = useSearchParams();
+
+  // Opened from a reminder ("/?add=1") or the app shortcut: go straight to quick add.
+  useEffect(() => {
+    if (params.get('add') === '1') {
+      show();
+      setParams({}, { replace: true });
+    }
+  }, [params, setParams, show]);
+
+  // If this device already allowed notifications, make sure the server knows it (after a login, say).
+  useEffect(() => {
+    if (permission() === 'granted') {
+      enablePush({ silent: true }).then(() => savePushPrefs(prefs.reminder)).catch(() => {});
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const tabs = [
     { to: '/', icon: HomeI, label: t('home'), end: true },
     { to: '/expenses', icon: ReceiptText, label: t('expenses') },

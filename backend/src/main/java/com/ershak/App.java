@@ -31,6 +31,7 @@ public final class App {
         boolean demo = Boolean.parseBoolean(env("ERSHAK_DEMO_DATA", "true"));
 
         Bank bank = new Bank(Database.init(dbUrl));
+        bank.push.start();
         Seeder.seed(bank, demo);
 
         WebServer server = startOnFreePort(bank, port, fixedPort, System.getenv("ERSHAK_ALLOWED_ORIGIN"));

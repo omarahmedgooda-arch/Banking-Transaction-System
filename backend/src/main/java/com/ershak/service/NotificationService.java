@@ -17,8 +17,18 @@ import java.util.List;
  */
 public class NotificationService {
 
+    /** Receives every new notification, e.g. to send it to the customer's phone as a push. */
+    public interface Listener {
+        void onNotification(long userId, String kind, String title, String message);
+    }
+
     private final Database db;
     private final Repositories repos;
+    private volatile Listener listener = (u, k, t, m) -> { };
+
+    public void listen(Listener l) {
+        this.listener = l;
+    }
 
     public NotificationService(Database db, Repositories repos) {
         this.db = db;
@@ -27,6 +37,7 @@ public class NotificationService {
 
     public void notify(Connection c, long userId, String kind, String title, String message) throws SQLException {
         repos.notifications().insert(c, userId, kind, title, message, BankClock.nowMillis());
+        listener.onNotification(userId, kind, title, message);
     }
 
     public void notifyAdmins(Connection c, String kind, String title, String message) throws SQLException {
