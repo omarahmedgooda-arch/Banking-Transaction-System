@@ -14,6 +14,8 @@
   <img alt="License MIT" src="https://img.shields.io/badge/license-MIT-5E6577">
 </p>
 
+<p align="center"><b>Live:</b> <a href="https://banking-transaction-system-production.up.railway.app">banking-transaction-system-production.up.railway.app</a></p>
+
 <p align="center">
   <img src="docs/screenshots/home.jpg" width="190" alt="Home">
   <img src="docs/screenshots/add.jpg" width="190" alt="Quick add">
@@ -92,6 +94,19 @@ To start over, stop the app and delete `ershak.db`.
 | Customer (instructor / testing) | `eng.ahmed`, `test` | `Ershak@2026` |
 | Bank officer | `admin` | `Admin@2026` (change it on first login) |
 | Bank officer (team) | `youel.admin`, `shaaban.admin`, `hany.admin`, `asmaa.admin`, `ahmed.admin` | `Admin@2026` (change it on first login) |
+
+## Hosting
+
+The web app is inside the jar, so one container serves everything (`Dockerfile`).
+
+**Railway (what the live site uses):** New Project → GitHub Repository → paste the repo URL → Deploy. Then:
+1. Right-click the service → **Attach volume** → mount path `/data` (keeps the database between restarts).
+2. **Variables:** `ERSHAK_ADMIN_PASSWORD` (a password only you know; without it anyone who reads this README can log in as an officer), plus the AI keys below.
+   Officers get this password only when the database is first created; to apply a new one to an existing database, point `ERSHAK_DB` at a new file, such as `jdbc:sqlite:/data/ershak-v2.db`.
+3. **Settings → Networking → Generate Domain** (port `8080`). `/api/health` answers `{"status":"ok"}`.
+4. New commits deploy automatically only if the Railway GitHub app is installed; otherwise use **Settings → Check for updates**.
+
+`render.yaml` is kept for Render; on its free plan the disk is wiped whenever the service sleeps.
 
 ## AI (optional)
 

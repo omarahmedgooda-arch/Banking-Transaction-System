@@ -38,7 +38,10 @@ public final class App {
 
         System.out.println();
         System.out.println("  Ershak is running: http://localhost:" + server.port());
-        System.out.println("  Officer login: " + Seeder.ADMIN_USERNAME + " / " + Seeder.ADMIN_PASSWORD
+        boolean customOfficerPassword = System.getenv("ERSHAK_ADMIN_PASSWORD") != null
+                && !System.getenv("ERSHAK_ADMIN_PASSWORD").isBlank();
+        System.out.println("  Officer login: " + Seeder.ADMIN_USERNAME + " / "
+                + (customOfficerPassword ? "(the password in ERSHAK_ADMIN_PASSWORD)" : Seeder.ADMIN_PASSWORD)
                 + "   Demo customer: omar.ahmed / " + Seeder.DEMO_PASSWORD);
         System.out.println();
 
