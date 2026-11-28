@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { get } from '../api';
 import { Link, Navigate, useNavigate } from 'react-router-dom';
 import { useAuth } from '../auth';
 import Icon from '../components/Icon';
@@ -14,6 +15,8 @@ export default function Login() {
   const [error, setError] = useState(null);
   const [busy, setBusy] = useState(false);
   const [showDemo, setShowDemo] = useState(false);
+  const [demoLogin, setDemoLogin] = useState(false);
+  useEffect(() => { get('/api/config').then((c) => setDemoLogin(!!c.demoLogin)).catch(() => {}); }, []);
 
   if (ready && user) return <Navigate to={user.role === 'ADMIN' ? '/admin' : '/'} replace />;
 
@@ -77,6 +80,7 @@ export default function Login() {
 
       <div className="stack" style={{ alignItems: 'center', gap: 14 }}>
         <p className="small muted">{L('New here?', 'أول مرة؟')} <Link to="/register" style={{ fontWeight: 600 }}>{L('Open an account', 'اعمل حساب')}</Link></p>
+        {demoLogin && (<>
         <button type="button" className="btn ghost sm" onClick={() => setShowDemo(!showDemo)}>
           {showDemo ? L('Hide demo accounts', 'اخفي حسابات التجربة') : L('Try the demo', 'جرّب الديمو')}
         </button>
@@ -90,6 +94,7 @@ export default function Login() {
             </button>
           </div>
         )}
+        </>)}
         <p className="row tiny muted" style={{ gap: 6 }}>
           <Icon name="shield" size={14} /> {L('Passwords are hashed with PBKDF2. Only you see your data.', 'الباسورد متشفّر بـ PBKDF2، ومحدش يشوف بياناتك غيرك.')}
         </p>

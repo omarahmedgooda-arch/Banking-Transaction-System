@@ -10,5 +10,12 @@
       "smallIcon": "ic_stat_ershak",
       "iconColor": "#C77D4A"
     }
+  },
+  "server": {
+    "url": "https://banking-transaction-system-production.up.railway.app",
+    "androidScheme": "https",
+    "allowNavigation": [
+      "banking-transaction-system-production.up.railway.app"
+    ]
   }
 }

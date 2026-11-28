@@ -31,7 +31,7 @@ import java.util.Set;
 public final class Api {
 
     private static final String SESSION = "session";
-    private static final Set<String> PUBLIC = Set.of("/api/health", "/api/auth/login", "/api/auth/register");
+    private static final Set<String> PUBLIC = Set.of("/api/health", "/api/config", "/api/auth/login", "/api/auth/register");
 
     private final Bank bank;
     private final RateLimiter loginLimiter = new RateLimiter(10, 60_000);
@@ -50,6 +50,8 @@ public final class Api {
         app.before("/api/", this::authenticate);
 
         app.get("/api/health", ctx -> ctx.json(Map.of("status", "ok")));
+        // Public: tells the login page whether it may show the demo accounts (only with the published passwords).
+        app.get("/api/config", ctx -> ctx.json(Map.of("demoLogin", com.ershak.service.Seeder.publicDemo())));
 
         // ----- auth
         app.post("/api/auth/register", ctx -> {

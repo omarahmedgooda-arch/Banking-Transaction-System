@@ -43,7 +43,8 @@ public final class App {
                 && !System.getenv("ERSHAK_ADMIN_PASSWORD").isBlank();
         System.out.println("  Officer login: " + Seeder.ADMIN_USERNAME + " / "
                 + (customOfficerPassword ? "(the password in ERSHAK_ADMIN_PASSWORD)" : Seeder.ADMIN_PASSWORD)
-                + "   Demo customer: omar.ahmed / " + Seeder.DEMO_PASSWORD);
+                + "   Demo customer: omar.ahmed / "
+                + (Seeder.publicDemo() ? Seeder.DEMO_PASSWORD : "(the password in ERSHAK_TEAM_PASSWORD)"));
         System.out.println();
 
         if (openBrowser) {

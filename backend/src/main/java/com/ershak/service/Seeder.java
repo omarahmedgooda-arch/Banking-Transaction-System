@@ -27,6 +27,18 @@ public final class Seeder {
     }
     public static final String DEMO_PASSWORD = "Ershak@2026";
 
+    /** The password every seeded customer starts with. On a public server set ERSHAK_TEAM_PASSWORD and share it privately. */
+    public static String teamPassword() {
+        String v = System.getenv("ERSHAK_TEAM_PASSWORD");
+        return v == null || v.isBlank() ? DEMO_PASSWORD : v;
+    }
+
+    /** True when the published demo passwords are in use (local runs), so the login page may show them. */
+    public static boolean publicDemo() {
+        String v = System.getenv("ERSHAK_TEAM_PASSWORD");
+        return v == null || v.isBlank();
+    }
+
     private Seeder() {
     }
 
@@ -78,7 +90,16 @@ public final class Seeder {
             {24, "gifts", "350", "هدية عيد ميلاد", null}, {25, "outings", "340", "خروجة الويك إند", null},
             {27, "groceries", "450", "طلبات البيت", "CARREFOUR"}, {28, "health", "120", "كشف", null},
         };
+        // Only the seeded demo and team customers: people who register themselves start empty.
+        java.util.Set<String> seeded = new java.util.HashSet<>(java.util.List.of(
+                "omar.ahmed", "sara.mahmoud", "mona.khaled", "youssef.gomaa"));
+        for (Member m : TEAM) {
+            seeded.add(m.username());
+        }
         for (User u : bank.db.read(c -> bank.repos.users().findByRole(c, Role.CUSTOMER))) {
+            if (!seeded.contains(u.getUsername())) {
+                continue;
+            }
             boolean has = bank.db.read(c -> dao.latestBudget(c, u.getId(), now.toString()).isPresent());
             if (has) {
                 continue;
@@ -113,13 +134,18 @@ public final class Seeder {
                           String current, String savings) {
     }
 
+    static final String NEW_USER = "test.new";
+
     private static final Member[] TEAM = {
             new Member("Youel", "youel", "01022222201", "youel.admin", "01000000001", "30000", null),
             new Member("Mohamed Shaaban", "mohamed.shaaban", "01022222202", "shaaban.admin", "01000000002", "10000", "40000"),
             new Member("Mohamed Hany", "mohamed.hany", "01022222203", "hany.admin", "01000000003", "35000", null),
             new Member("Asmaa", "asmaa", "01022222204", "asmaa.admin", "01000000004", "12000", "28000"),
             new Member("Eng. Ahmed", "eng.ahmed", "01022222205", "ahmed.admin", "01000000005", "50000", "50000"),
+            new Member("Omar Mostafa", "omar.mostafa", "01022222207", "omar.mostafa.admin", "01000000007", "25000", "20000"),
             new Member("Test User", "test", "01022222206", null, null, "20000", null),
+            // Only for automated tests, so scripts never clash with someone testing by hand.
+            new Member("Automation", "auto.customer", "01022222208", "auto.officer", "01000000008", "40000", "20000"),
     };
 
     /**
@@ -132,12 +158,16 @@ public final class Seeder {
             String saraNumber = bank.db.read(c -> bank.repos.users().findByUsername(c, "sara.mahmoud"))
                     .flatMap(u -> bank.accounts.listForUser(u.getId()).stream().findFirst())
                     .map(Account::getAccountNumber).orElse(null);
+            // A brand-new customer with no accounts and no expenses, for first-run and empty-state tests.
+            if (!bank.db.read(c -> bank.repos.users().existsByUsername(c, NEW_USER))) {
+                bank.auth.register("New Customer", "test_new@example.com", "01022222209", NEW_USER, teamPassword());
+            }
             for (Member m : TEAM) {
                 boolean exists = bank.db.read(c -> bank.repos.users().existsByUsername(c, m.username()));
                 if (!exists) {
                     at(base.minusDays(14));
                     String slug = m.username().replace('.', '_');
-                    User u = bank.auth.register(m.name(), slug + "@example.com", m.phone(), m.username(), DEMO_PASSWORD);
+                    User u = bank.auth.register(m.name(), slug + "@example.com", m.phone(), m.username(), teamPassword());
                     Account current = bank.accounts.open(u.getId(), AccountType.CURRENT, new BigDecimal(m.current()));
                     if (m.savings() != null) {
                         bank.accounts.open(u.getId(), AccountType.SAVINGS, new BigDecimal(m.savings()));
@@ -162,7 +192,7 @@ public final class Seeder {
                             User o = new User(m.name() + " (Officer)", officer.replace('.', '_') + "@ershak.bank",
                                     m.officerPhone(), officer, Role.ADMIN);
                             AuthService.setPassword(o, officerPassword());
-                            o.setMustChangePassword(true);
+                            o.setMustChangePassword(!officer.startsWith("auto.")); // scripts can't change a password
                             o.setCreatedAt(BankClock.nowMillis());
                             bank.repos.users().insert(c, o);
                             bank.audit.append(c, "system", "OFFICER_CREATED", officer);
@@ -180,10 +210,10 @@ public final class Seeder {
         ZonedDateTime base = ZonedDateTime.now(BankClock.ZONE).withHour(12).withMinute(0).withSecond(0).withNano(0);
         try {
             at(base.minusDays(20));
-            User omar = bank.auth.register("Omar Ahmed", "omar@example.com", "01012345678", "omar.ahmed", DEMO_PASSWORD);
-            User sara = bank.auth.register("Sara Mahmoud", "sara@example.com", "01112345678", "sara.mahmoud", DEMO_PASSWORD);
-            User mona = bank.auth.register("Mona Khaled", "mona@example.com", "01212345678", "mona.khaled", DEMO_PASSWORD);
-            User youssef = bank.auth.register("Youssef Gomaa", "youssef@example.com", "01512345678", "youssef.gomaa", DEMO_PASSWORD);
+            User omar = bank.auth.register("Omar Ahmed", "omar@example.com", "01012345678", "omar.ahmed", teamPassword());
+            User sara = bank.auth.register("Sara Mahmoud", "sara@example.com", "01112345678", "sara.mahmoud", teamPassword());
+            User mona = bank.auth.register("Mona Khaled", "mona@example.com", "01212345678", "mona.khaled", teamPassword());
+            User youssef = bank.auth.register("Youssef Gomaa", "youssef@example.com", "01512345678", "youssef.gomaa", teamPassword());
 
             Account omarSavings = bank.accounts.open(omar.getId(), AccountType.SAVINGS, new BigDecimal("45000"));
             Account omarCurrent = bank.accounts.open(omar.getId(), AccountType.CURRENT, new BigDecimal("15000"));

@@ -79,7 +79,7 @@ Arabic (right-to-left) and English · light, dark or follow the phone · phone, 
 ## Android app
 
 [Download ershak.apk](https://github.com/omarahmedgooda-arch/Banking-Transaction-System/releases/download/android-latest/ershak.apk), open it on the phone and allow installing from this source.
-The app is the same interface (Capacitor), talking to the live server, plus two things only a phone app can do:
+The app opens the live site inside a native shell (Capacitor), so it updates with every deploy, plus two things only a phone app can do:
 
 - **Bank SMS:** with your permission it reads the SMS inbox (read-only), keeps messages that look like bank transactions,
   and shows them as suggested expenses. Nothing is logged until you tick it, and only those messages leave the phone.
@@ -100,14 +100,27 @@ You only need **Java 21** ([adoptium.net](https://adoptium.net)).
 Then open **http://localhost:7070**. The first start creates `ershak.db` with demo data: three months of expenses, a budget and goals.
 To start over, stop the app and delete `ershak.db`.
 
-| Role | Username | Password |
+**Local runs** use the published demo passwords: customers `Ershak@2026`, officers `Admin@2026` (changed on first login).
+The login page offers the demo accounts only in this mode.
+
+**The live server** uses private passwords set in `ERSHAK_TEAM_PASSWORD` (customers) and `ERSHAK_ADMIN_PASSWORD` (officers),
+shared inside the team only; the demo buttons are hidden there. Anyone can still register their own account, which starts empty.
+
+| Who | Customer | Officer |
 |---|---|---|
-| Customer | `omar.ahmed` | `Ershak@2026` |
-| Customer | `sara.mahmoud`, `mona.khaled`, `youssef.gomaa` | `Ershak@2026` |
-| Customer (team) | `youel`, `mohamed.shaaban`, `mohamed.hany`, `asmaa` | `Ershak@2026` |
-| Customer (instructor / testing) | `eng.ahmed`, `test` | `Ershak@2026` |
-| Bank officer | `admin` | `Admin@2026` (change it on first login) |
-| Bank officer (team) | `youel.admin`, `shaaban.admin`, `hany.admin`, `asmaa.admin`, `ahmed.admin` | `Admin@2026` (change it on first login) |
+| Omar Ahmed | `omar.ahmed` | `admin` |
+| Omar Mostafa | `omar.mostafa` | `omar.mostafa.admin` |
+| Youel | `youel` | `youel.admin` |
+| Mohamed Shaaban | `mohamed.shaaban` | `shaaban.admin` |
+| Mohamed Hany | `mohamed.hany` | `hany.admin` |
+| Asmaa | `asmaa` | `asmaa.admin` |
+| Eng. Ahmed (instructor) | `eng.ahmed` | `ahmed.admin` |
+| Shared manual testing | `test` | — |
+| First run and empty states (no accounts, no expenses) | `test.new` | — |
+| Automated tests only | `auto.customer` | `auto.officer` (no forced password change) |
+| Transfer recipients | `sara.mahmoud`, `mona.khaled`, `youssef.gomaa` | — |
+
+Officers must set their own password at first login. Seeded customers get three months of sample spending; people who register start empty.
 
 ## Hosting
 
@@ -115,8 +128,8 @@ The web app is inside the jar, so one container serves everything (`Dockerfile`)
 
 **Railway (what the live site uses):** New Project → GitHub Repository → paste the repo URL → Deploy. Then:
 1. Right-click the service → **Attach volume** → mount path `/data` (keeps the database between restarts).
-2. **Variables:** `ERSHAK_ADMIN_PASSWORD` (a password only you know; without it anyone who reads this README can log in as an officer), plus the AI keys below.
-   Officers get this password only when the database is first created; to apply a new one to an existing database, point `ERSHAK_DB` at a new file, such as `jdbc:sqlite:/data/ershak-v2.db`.
+2. **Variables:** `ERSHAK_ADMIN_PASSWORD` and `ERSHAK_TEAM_PASSWORD` (passwords only the team knows; without them anyone who reads this README can log in), plus the AI keys below.
+   Seeded accounts get these passwords only when the database is first created; to apply new ones, point `ERSHAK_DB` at a new file, such as `jdbc:sqlite:/data/ershak-v3.db`.
 3. **Settings → Networking → Generate Domain** (port `8080`). `/api/health` answers `{"status":"ok"}`.
 4. New commits deploy automatically only if the Railway GitHub app is installed; otherwise use **Settings → Check for updates**.
 
@@ -218,6 +231,7 @@ npm run build          # builds the web app into the Java project
 | `ERSHAK_DB` | `jdbc:sqlite:ershak.db` | Database file |
 | `ERSHAK_DEMO_DATA` | `true` | Create demo customers on first start |
 | `ERSHAK_ADMIN_PASSWORD` | `Admin@2026` | Starting password for every officer |
+| `ERSHAK_TEAM_PASSWORD` | `Ershak@2026` | Starting password for seeded customers; setting it also hides the demo buttons |
 | `ERSHAK_ALLOWED_ORIGIN` | — | Frontend URL when hosted separately |
 | `GEMINI_API_KEY`, `GROQ_API_KEY`, `AI_EXTRA_PROVIDERS` | — | AI, see above |
 
