@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import Icon from './Icon';
 import { ArrowLeft } from 'lucide-react';
 import { amount, statusLabel, statusTone, time } from '../format';
+import { localize } from '../serverText';
 
 export function TopBar({ title, onBack, right }) {
   const navigate = useNavigate();
@@ -70,7 +71,7 @@ export function TxRow({ tx }) {
     <Link to={`/tx/${tx.id}`} className="tx">
       <div className="tx-icon"><Icon name={icon.name} size={18} color={icon.color} /></div>
       <div className="tx-main">
-        <p className="tx-title">{tx.title}</p>
+        <p className="tx-title" dir="auto">{localize(tx.title)}</p>
         <p className={`tiny ${pending ? tone : 'muted'}`}>{sub}</p>
       </div>
       <p className={`tx-amount ${tone}`} style={tx.status === 'REJECTED' ? { textDecoration: 'line-through' } : undefined}>

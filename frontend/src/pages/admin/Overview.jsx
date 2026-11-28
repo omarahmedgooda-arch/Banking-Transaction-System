@@ -4,17 +4,19 @@ import Icon from '../../components/Icon';
 import { ErrorCard, Proverb, Skeleton, useLoader } from '../../components/ui';
 import { compact, time } from '../../format';
 import ReviewTable from './ReviewTable';
+import { useL } from '../../prefs';
 
 export default function Overview() {
+  const L = useL();
   const { data, error, loading, reload } = useLoader(() => get('/api/admin/overview'));
-  const today = new Date().toLocaleDateString('en-US', { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'Africa/Cairo' });
+  const today = new Date().toLocaleDateString(L('en-US', 'ar-EG-u-nu-latn'), { weekday: 'long', day: 'numeric', month: 'long', timeZone: 'Africa/Cairo' });
 
   return (
     <>
       <div className="between" style={{ flexWrap: 'wrap', alignItems: 'flex-end' }}>
         <div>
           <p className="small muted">{today}</p>
-          <h1 style={{ marginTop: 4 }}>Overview</h1>
+          <h1 style={{ marginTop: 4 }}>{L('Overview', 'نظرة عامة')}</h1>
         </div>
       </div>
 
@@ -23,31 +25,31 @@ export default function Overview() {
       {data && (
         <>
           <div className="kpis">
-            <Kpi label="Customers" value={data.customers.toLocaleString()} />
-            <Kpi label="Total deposits" value={compact(data.totalDeposits)} />
-            <Kpi label="Transactions today" value={data.transactionsToday} />
-            <Kpi label="Waiting for review" value={data.pendingReviews} danger={data.pendingReviews > 0} />
+            <Kpi label={L('Customers', 'العملاء')} value={data.customers.toLocaleString()} />
+            <Kpi label={L('Total deposits', 'إجمالي الإيداعات')} value={compact(data.totalDeposits)} />
+            <Kpi label={L('Transactions today', 'عمليات النهارده')} value={data.transactionsToday} />
+            <Kpi label={L('Waiting for review', 'مستنية مراجعة')} value={data.pendingReviews} danger={data.pendingReviews > 0} />
           </div>
 
           <div className="row" style={{ alignItems: 'flex-start', flexWrap: 'wrap', gap: 20 }}>
             <section className="card stack" style={{ flex: '999 1 520px', minWidth: 0 }}>
               <div className="between">
                 <div>
-                  <h2>Review queue</h2>
-                  <Proverb style={{ fontSize: 16, textAlign: 'left', color: 'var(--muted)' }}>الباب اللي يجيلك منه الريح، سدّه واستريح</Proverb>
+                  <h2>{L('Review queue', 'قايمة المراجعة')}</h2>
+                  <Proverb style={{ fontSize: 15, color: 'var(--muted)' }}>الباب اللي يجيلك منه الريح، سدّه واستريح</Proverb>
                 </div>
-                <Link to="/admin/reviews" className="small">View all</Link>
+                <Link to="/admin/reviews" className="small">{L('View all', 'الكل')}</Link>
               </div>
               <ReviewTable items={data.reviews.slice(0, 5)} onChange={reload} />
             </section>
 
             <section className="card stack" style={{ flex: '1 1 280px', minWidth: 0 }}>
-              <h2>Audit log</h2>
+              <h2>{L('Audit log', 'سجل المراجعة')}</h2>
               <div className="inset row">
                 <Icon name={data.audit.intact ? 'shieldCheck' : 'shieldX'} size={22} color={data.audit.intact ? 'var(--ok)' : 'var(--bad)'} />
                 <div>
-                  <p className={data.audit.intact ? 'ok' : 'bad'} style={{ fontWeight: 600 }}>{data.audit.intact ? 'Chain intact' : 'Tampering detected'}</p>
-                  <p className="tiny muted">{data.audit.totalEntries.toLocaleString()} entries{data.audit.intact ? '' : ` · first broken #${data.audit.firstBrokenId}`}</p>
+                  <p className={data.audit.intact ? 'ok' : 'bad'} style={{ fontWeight: 600 }}>{data.audit.intact ? L('Chain intact', 'السلسلة سليمة') : L('Tampering detected', 'فيه تلاعب')}</p>
+                  <p className="tiny muted">{data.audit.totalEntries.toLocaleString()} {L('entries', 'سجل')}{data.audit.intact ? '' : ` · ${L('first broken', 'أول سجل مكسور')} #${data.audit.firstBrokenId}`}</p>
                 </div>
               </div>
               <div className="stack small" style={{ gap: 10 }}>
@@ -58,10 +60,10 @@ export default function Overview() {
                   </div>
                 ))}
               </div>
-              <Link to="/admin/audit" className="btn sm">Open audit log</Link>
+              <Link to="/admin/audit" className="btn sm">{L('Open audit log', 'افتح سجل المراجعة')}</Link>
             </section>
           </div>
-          <p className="tiny muted">{data.flaggedToday} transactions scored by the Fraud Guard today.</p>
+          <p className="tiny muted">{L(`${data.flaggedToday} transactions scored by the Fraud Guard today.`, `Fraud Guard قيّم ${data.flaggedToday} عملية النهارده.`)}</p>
         </>
       )}
     </>

@@ -4,6 +4,7 @@ import { Held, OtpPanel, Reasons } from '../components/Outcome';
 import { ErrorCard, Skeleton, StatusBadge, TopBar, typeName, useLoader } from '../components/ui';
 import { dateTime, egp } from '../format';
 import { useL } from '../prefs';
+import { localize } from '../serverText';
 
 export default function TransactionDetail() {
   const L = useL();
@@ -37,7 +38,7 @@ export default function TransactionDetail() {
       {tx && (
         <>
           <div className="stack" style={{ alignItems: 'center', gap: 6, padding: '12px 0' }}>
-            <p className="small muted">{tx.title}</p>
+            <p className="small muted" dir="auto">{localize(tx.title)}</p>
             <p className={`num ${out ? '' : 'ok'}`} style={{ fontSize: 34, fontWeight: 700, textDecoration: tx.status === 'REJECTED' ? 'line-through' : undefined }}>
               {out ? '-' : '+'}{egp(tx.amount)}
             </p>

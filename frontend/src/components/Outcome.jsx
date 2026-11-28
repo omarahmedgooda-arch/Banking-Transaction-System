@@ -7,6 +7,7 @@ import { egp, time } from '../format';
 import { useToast } from './Toast';
 import { play } from '../sound';
 import { useL } from '../prefs';
+import { localize } from '../serverText';
 
 /** What the customer sees after sending money: done, enter a code, or held for review. */
 export default function Outcome({ result, title = 'Transfer' }) {
@@ -78,7 +79,7 @@ export function Reasons({ reasons, score }) {
       {reasons.map((r) => (
         <div key={r.ruleId} className="row" style={{ alignItems: 'baseline' }}>
           <span className="tiny num" style={{ width: 30, fontWeight: 600, color: score >= 60 ? 'var(--bad)' : 'var(--warn)' }}>+{r.points}</span>
-          <p className="small">{r.reason}</p>
+          <p className="small">{localize(r.reason)}</p>
         </div>
       ))}
     </div>
@@ -136,7 +137,7 @@ export function OtpPanel({ tx, reasons, score, onFinish }) {
       } else if (r.transaction.status === 'REJECTED') {
         onFinish(r.transaction);
       } else {
-        setError(r.message);
+        setError(localize(r.message));
         setDigits(['', '', '', '', '', '']);
         refs.current[0]?.focus();
       }

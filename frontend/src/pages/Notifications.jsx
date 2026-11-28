@@ -5,6 +5,7 @@ import Icon from '../components/Icon';
 import { ErrorCard, Proverb, Skeleton, TopBar, useLoader } from '../components/ui';
 import { dateTime } from '../format';
 import { useL } from '../prefs';
+import { localize } from '../serverText';
 
 const icons = {
   LOCK: ['lock', 'var(--bad)'],
@@ -46,10 +47,10 @@ export default function Notifications() {
                   <div className="between">
                     {isArabic(n.title)
                       ? <p dir="rtl" style={{ fontWeight: 700, fontSize: 14 }}>{n.title}</p>
-                      : <p style={{ fontWeight: 600, fontSize: 14 }}>{n.title}</p>}
+                      : <p dir="auto" style={{ fontWeight: 600, fontSize: 14 }}>{localize(n.title)}</p>}
                     {!n.read && <span className="badge accent">{L('New', 'جديد')}</span>}
                   </div>
-                  <p className="small" dir="auto" style={{ color: 'var(--text)' }}>{n.message}</p>
+                  <p className="small" dir="auto" style={{ color: 'var(--text)' }}>{localize(n.message)}</p>
                   <p className="tiny muted">{dateTime(n.createdAt)}</p>
                 </div>
               </div>

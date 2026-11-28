@@ -1,3 +1,4 @@
+import { localize } from './serverText';
 // Thin client for the Ershak REST API. The session token lives in sessionStorage,
 // so closing the tab logs the user out.
 const BASE = import.meta.env.VITE_API_URL || '';
@@ -5,7 +6,7 @@ const TOKEN_KEY = 'ershak.token';
 
 export class ApiError extends Error {
   constructor(status, body) {
-    super(body?.message || 'Something went wrong. Try again.');
+    super(localize(body?.message || 'Something went wrong. Try again.'));
     this.status = status;
     this.code = body?.code;
     this.body = body || {};
