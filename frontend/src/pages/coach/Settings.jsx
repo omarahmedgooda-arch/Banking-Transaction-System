@@ -3,6 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import { BarChart3, Bell, BellRing, ChevronLeft, ChevronRight, Download, KeyRound, Languages, LogOut, Moon, PiggyBank, Receipt, Share, Target, UserRound, Wallet } from 'lucide-react';
 import { canPromptInstall, enablePush, isIos, isStandalone, onInstallChange, permission, promptInstall, pushSupported, savePushPrefs, sendTestPush } from '../../push';
 import { useToast } from '../../components/Toast';
+import { enableLocalReminders, isNative, localRemindersGranted, scheduleLocalReminders, testLocalReminder } from '../../native';
 import { put } from '../../api';
 import { useAuth } from '../../auth';
 import { monthKey, money } from '../../coach';
@@ -44,15 +45,21 @@ export default function Settings() {
   const first = useRef(true);
 
   useEffect(() => onInstallChange(setInstallable), []);
+  // In the Android app reminders are scheduled on the phone itself.
+  useEffect(() => { if (isNative()) localRemindersGranted().then((g) => setPerm(g ? 'granted' : 'default')); }, []);
   // Save reminder settings on the server (it sends the reminders), a moment after the last change.
   useEffect(() => {
     if (first.current) { first.current = false; return undefined; }
-    const id = setTimeout(() => savePushPrefs(r).catch((e) => toast(e.message, 'bad')), 600);
+    const id = setTimeout(() => {
+      savePushPrefs(r).catch((e) => toast(e.message, 'bad'));
+      if (isNative() && perm === 'granted') scheduleLocalReminders(r).catch(() => {});
+    }, 600);
     return () => clearTimeout(id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [r]);
 
   const test = async () => {
+    if (isNative()) { await testLocalReminder(); return; }
     try {
       const { sent } = await sendTestPush();
       toast(sent ? (ar ? 'بعتنا إشعار تجربة' : 'Test notification sent') : (ar ? 'مفيش جهاز مفعّل عليه الإشعارات' : 'No device has notifications on'), sent ? 'ok' : 'bad');
@@ -86,7 +93,7 @@ export default function Settings() {
         </div>
       </section>
 
-      {!isStandalone() && (installable || isIos()) && (
+      {!isNative() && !isStandalone() && (installable || isIos()) && (
         <section className="card row">
           <span className="tx-icon"><Download size={19} color="var(--copper)" /></span>
           <div className="tx-main">
@@ -108,12 +115,12 @@ export default function Settings() {
             <span className="tx-icon"><Bell size={19} color="var(--copper)" /></span>
             <span className="tx-main small">
               {perm === 'denied' ? t('notifDenied')
-                : !pushSupported() ? (isIos() && !isStandalone() ? (ar ? 'على الآيفون: سطّب التطبيق الأول، وبعدين فعّل الإشعارات من جوه.' : 'On iPhone, install the app first, then turn on notifications inside it.') : (ar ? 'المتصفح ده مش بيدعم الإشعارات.' : 'This browser does not support notifications.'))
+                : !pushSupported() && !isNative() ? (isIos() && !isStandalone() ? (ar ? 'على الآيفون: سطّب التطبيق الأول، وبعدين فعّل الإشعارات من جوه.' : 'On iPhone, install the app first, then turn on notifications inside it.') : (ar ? 'المتصفح ده مش بيدعم الإشعارات.' : 'This browser does not support notifications.'))
                   : t('enableNotif')}
             </span>
-            {perm === 'default' && pushSupported() && (
+            {perm === 'default' && (pushSupported() || isNative()) && (
               <button type="button" className="btn sm primary" onClick={async () => {
-                const res = await askNotifications();
+                const res = isNative() ? await enableLocalReminders(r) : await askNotifications();
                 setPerm(res);
                 if (res === 'granted') savePushPrefs(r).catch(() => {});
               }}>{t('enableNotif')}</button>
@@ -220,7 +227,7 @@ export function Setup() {
           <p className="small muted">هبعتلك تذكير واحد في اليوم علشان متنساش تسجّل. لو سجّلت قبلها مش هزعجك.</p>
           <input type="time" className="input" value={time} onChange={(e) => setTime(e.target.value)} />
           <button type="button" className="btn primary block" onClick={async () => {
-            const res = await askNotifications();
+            const res = isNative() ? await enableLocalReminders({ ...prefs.reminder, time }).catch(() => 'denied') : await askNotifications();
             if (res === 'granted') savePushPrefs({ ...prefs.reminder, time }).catch(() => {});
             finish();
           }}>{t('letsGo')}</button>

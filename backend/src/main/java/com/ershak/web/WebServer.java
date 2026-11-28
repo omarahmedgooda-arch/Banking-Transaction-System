@@ -233,12 +233,28 @@ public final class WebServer {
                 + "font-src 'self' https://fonts.gstatic.com; connect-src 'self' *; frame-ancestors 'none'");
     }
 
-    private void cors(HttpExchange ex) {
-        if (allowedOrigin == null || allowedOrigin.isBlank()) {
-            return;
+    /**
+     * The Android app (Capacitor) runs on https://localhost and calls this server from there; the API uses
+     * bearer tokens, not cookies, so allowing it is safe. ERSHAK_ALLOWED_ORIGIN adds more, comma-separated.
+     */
+    private boolean allowed(String origin) {
+        if ("https://localhost".equals(origin) || "capacitor://localhost".equals(origin)) {
+            return true;
         }
+        if (allowedOrigin == null || allowedOrigin.isBlank()) {
+            return false;
+        }
+        for (String o : allowedOrigin.split(",")) {
+            if (o.strip().equals(origin)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private void cors(HttpExchange ex) {
         String origin = ex.getRequestHeaders().getFirst("Origin");
-        if (origin != null && origin.equals(allowedOrigin)) {
+        if (origin != null && allowed(origin)) {
             var h = ex.getResponseHeaders();
             h.set("Access-Control-Allow-Origin", origin);
             h.set("Vary", "Origin");

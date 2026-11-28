@@ -1,5 +1,8 @@
+import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Bell, ChevronLeft, ChevronRight, Landmark, Plus, ShieldCheck, Target } from 'lucide-react';
+import SmsSheet from '../../components/SmsSheet';
+import { isNative, newBankSms, smsPermissionGranted } from '../../native';
+import { Bell, ChevronLeft, ChevronRight, Landmark, MessageSquareText, Plus, ShieldCheck, Target } from 'lucide-react';
 import { get } from '../../api';
 import { useAuth } from '../../auth';
 import { CatIcon, money, useCatName, useQuickAdd } from '../../coach';
@@ -18,6 +21,14 @@ export default function CoachHome() {
   const accounts = useLoader(() => get('/api/accounts'));
   const goals = useLoader(() => get('/api/goals'));
   const Chev = ar ? ChevronLeft : ChevronRight;
+  const [smsOpen, setSmsOpen] = useState(false);
+  const [smsCount, setSmsCount] = useState(null);
+
+  // Android app: quietly count new bank messages (only if SMS permission was already given).
+  useEffect(() => {
+    if (!isNative()) return;
+    smsPermissionGranted().then((ok) => ok && newBankSms().then((m) => setSmsCount(m.length)).catch(() => {}));
+  }, [version]);
 
   const h = Number(new Date().toLocaleString('en-US', { hour: 'numeric', hour12: false, timeZone: 'Africa/Cairo' }));
   const todayKey = new Date().toLocaleDateString('en-CA', { timeZone: 'Africa/Cairo' });
@@ -82,6 +93,17 @@ export default function CoachHome() {
               </div>
             </button>
           )}
+
+          {isNative() && (
+            <section className="card tight between">
+              <div className="row">
+                <span className="tx-icon"><MessageSquareText size={19} color="var(--copper)" /></span>
+                <p className="small">{smsCount ? (ar ? `لقيت ${smsCount} رسايل بنك جديدة` : `${smsCount} new bank messages`) : (ar ? 'سجّل من رسايل البنك' : 'Log from bank SMS')}</p>
+              </div>
+              <button type="button" className="btn sm" onClick={() => setSmsOpen(true)}>{ar ? 'افتح' : 'Open'}</button>
+            </section>
+          )}
+          {smsOpen && <SmsSheet onClose={() => setSmsOpen(false)} />}
 
           <section className="card tight between">
             <p className="small">{todays.length ? t('todaySome', todays.length, money(todaySum)) : t('todayNone')}</p>

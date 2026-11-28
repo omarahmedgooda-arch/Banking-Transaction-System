@@ -1,0 +1,14 @@
+{
+  "appId": "com.ershak.app",
+  "appName": "قرشك",
+  "webDir": "dist-mobile",
+  "android": {
+    "backgroundColor": "#0D1220"
+  },
+  "plugins": {
+    "LocalNotifications": {
+      "smallIcon": "ic_stat_ershak",
+      "iconColor": "#C77D4A"
+    }
+  }
+}

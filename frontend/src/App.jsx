@@ -18,6 +18,8 @@ import { Home as HomeI, MessageCircle, Plus, ReceiptText, Target } from 'lucide-
 import { useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { enablePush, permission, savePushPrefs } from './push';
+import { isNative, onReminderTap } from './native';
+import { useNavigate } from 'react-router-dom';
 import Transfer from './pages/Transfer';
 import Move from './pages/Move';
 import Activity from './pages/Activity';
@@ -65,9 +67,12 @@ function CustomerLayout() {
     }
   }, [params, setParams, show]);
 
+  const navigate = useNavigate();
+  useEffect(() => onReminderTap(navigate), [navigate]);
+
   // If this device already allowed notifications, make sure the server knows it (after a login, say).
   useEffect(() => {
-    if (permission() === 'granted') {
+    if (!isNative() && permission() === 'granted') {
       enablePush({ silent: true }).then(() => savePushPrefs(prefs.reminder)).catch(() => {});
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps

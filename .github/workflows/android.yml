@@ -1,0 +1,62 @@
+# Builds the Android app (APK) on GitHub's servers and publishes it as a release download.
+name: Android APK
+
+on:
+  push:
+    branches: [main]
+    paths: ['frontend/**', '.github/workflows/android.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 21
+
+      - uses: android-actions/setup-android@v3
+
+      - name: Build the web app for Android and copy it into the project
+        run: |
+          npm ci
+          npm run build:mobile
+          npx cap sync android
+
+      - name: Build the APK
+        working-directory: frontend/android
+        run: |
+          chmod +x gradlew
+          ./gradlew assembleDebug --no-daemon
+          cp app/build/outputs/apk/debug/app-debug.apk ${{ github.workspace }}/ershak.apk
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: ershak-apk
+          path: ershak.apk
+
+      - name: Publish as the "android-latest" release
+        working-directory: ${{ github.workspace }}
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          gh release delete android-latest --yes --cleanup-tag || true
+          gh release create android-latest ershak.apk \
+            --title "قرشك Android (latest)" \
+            --notes "Built from ${GITHUB_SHA::7}. Download ershak.apk on your phone and install it (allow installs from this source)." \
+            --target "$GITHUB_SHA"
