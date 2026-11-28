@@ -14,7 +14,7 @@
   <img alt="License MIT" src="https://img.shields.io/badge/license-MIT-5E6577">
 </p>
 
-<p align="center"><b>Live:</b> <a href="https://banking-transaction-system-production.up.railway.app">banking-transaction-system-production.up.railway.app</a></p>
+<p align="center"><b>Live:</b> <a href="https://banking-transaction-system-production.up.railway.app">banking-transaction-system-production.up.railway.app</a> · <b>Android:</b> <a href="https://github.com/omarahmedgooda-arch/Banking-Transaction-System/releases/download/android-latest/ershak.apk">ershak.apk</a></p>
 
 <p align="center">
   <img src="docs/screenshots/home.jpg" width="190" alt="Home">
@@ -75,6 +75,19 @@ Arabic (right-to-left) and English · light, dark or follow the phone · phone, 
   <img src="docs/screenshots/dark-insights.jpg" width="190" alt="Insights, dark">
 </p>
 <p align="center"><img src="docs/screenshots/desktop.jpg" width="780" alt="Desktop"></p>
+
+## Android app
+
+[Download ershak.apk](https://github.com/omarahmedgooda-arch/Banking-Transaction-System/releases/download/android-latest/ershak.apk), open it on the phone and allow installing from this source.
+The app is the same interface (Capacitor), talking to the live server, plus two things only a phone app can do:
+
+- **Bank SMS:** with your permission it reads the SMS inbox (read-only), keeps messages that look like bank transactions,
+  and shows them as suggested expenses. Nothing is logged until you tick it, and only those messages leave the phone.
+- **Reminders on the phone:** the daily and weekly reminders are scheduled by Android itself.
+
+Every push to `main` that touches `frontend/` rebuilds the APK on GitHub Actions (`.github/workflows/android.yml`) and replaces the `android-latest` release.
+To build it yourself: `cd frontend && npm run android`, then open `frontend/android` in Android Studio.
+The APK is debug-signed for testing. Google Play only allows SMS reading for default SMS apps, so a store version would rely on pasting or sharing messages instead.
 
 ## Run it
 
